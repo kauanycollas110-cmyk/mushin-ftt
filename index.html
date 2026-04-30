@@ -66,9 +66,9 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);
 
 .neu-wrap{position:relative;display:grid;place-items:center}
 .neu-wrap::before{content:"";position:absolute;width:220px;height:220px;border-radius:50%;
-  border:1px solid var(--ink-faint);opacity:0.3}
+  border:1px solid var(--ink-faint);opacity:0.3;pointer-events:none}
 .neu-wrap::after{content:"";position:absolute;width:260px;height:260px;border-radius:50%;
-  border:1px dashed var(--ink-faint);opacity:0.15;animation:spin 60s linear infinite}
+  border:1px dashed var(--ink-faint);opacity:0.15;animation:spin 60s linear infinite;pointer-events:none}
 @keyframes spin{to{transform:rotate(360deg)}}
 
 .neu-btn{appearance:none;border:0;outline:0;cursor:pointer;
@@ -341,9 +341,15 @@ function tap(x,y){
   if(navigator.vibrate)navigator.vibrate(50);
 }
 
-// CONNECT — click como handler principal (mais confiável cross-browser)
-$('#connectBtn').addEventListener('click',e=>{e.preventDefault();e.stopPropagation();startPrep()});
-$('#connectBtn').addEventListener('touchend',e=>{e.preventDefault();e.stopPropagation();startPrep()},{passive:false});
+// CONNECT — click funciona em tudo (mobile+desktop) sem delay com meta viewport
+let prepLock=false;
+$('#connectBtn').addEventListener('click',e=>{
+  e.preventDefault();
+  if(prepLock)return;
+  prepLock=true;
+  startPrep();
+  setTimeout(()=>{prepLock=false},4500);
+});
 
 // TAP CAPTURE — touchstart para latência zero
 run.addEventListener('touchstart',e=>{
@@ -357,9 +363,8 @@ run.addEventListener('pointerdown',e=>{
   e.preventDefault();tap(e.clientX,e.clientY);
 },{passive:false});
 
-// RESET — click como handler principal
+// RESET — click simples
 $('#resetBtn').addEventListener('click',e=>{e.preventDefault();show('idle')});
-$('#resetBtn').addEventListener('touchend',e=>{e.preventDefault();show('idle')},{passive:false});
 
 show('idle');
 </script>
