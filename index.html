@@ -4,23 +4,19 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>MUSHIN // FTT</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
 <style>
-:root {
-  --bg:#000000;
-  --blood:#C70039;
-  --blood-dark:#8B0000;
-  --blood-glow:rgba(199,0,57,0.6);
-  --gold:#D4AF37;
-  --gold-glow:rgba(212,175,55,0.45);
-  --ink:#e0e0e0;
-  --ink-dim:#555;
-  --ink-faint:#2a2a2a;
-  --neu-hi:rgba(255,255,255,0.06);
-  --neu-lo:rgba(0,0,0,0.85);
+:root{
+  --bg:#000;--blood:#C70039;--blood-dark:#8B0000;
+  --blood-glow:rgba(199,0,57,0.55);--blood-dim:rgba(139,0,0,0.25);
+  --gold:#D4AF37;--gold-glow:rgba(212,175,55,0.5);--gold-dim:rgba(212,175,55,0.15);
+  --ink:#e0e0e0;--ink-dim:#555;--ink-faint:#1e1e1e;
+  --neu-hi:rgba(255,255,255,0.07);--neu-lo:rgba(0,0,0,0.9);
   --mono:'JetBrains Mono',monospace;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -28,188 +24,229 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);
   font-family:var(--mono);user-select:none;-webkit-user-select:none;
   touch-action:manipulation;overscroll-behavior:none}
 
-/* ═══ TEIA NEURAL (SVG Background) ═══ */
-.neural-bg{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.4}
+/* ═══ NEURAL BACKGROUND ═══ */
+.neural-bg{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.35}
+.neural-bg path{stroke-dasharray:12 8;animation:synapse 4s linear infinite}
+.n2{animation-delay:-1s!important}.n3{animation-delay:-2s!important}
+.n4{animation-delay:-0.5s!important}.n5{animation-delay:-1.5s!important}
+.n6{animation-delay:-2.5s!important}.n7{animation-delay:-3s!important}
+.n8{animation-delay:-0.7s!important}.n9{animation-delay:-1.8s!important}
+.n10{animation-delay:-3.5s!important}
+@keyframes synapse{to{stroke-dashoffset:-40}}
+.neural-bg circle{animation:nodePulse 3s ease-in-out infinite alternate}
+.np2{animation-delay:-0.5s!important}.np3{animation-delay:-1s!important}
+.np4{animation-delay:-1.5s!important}.np5{animation-delay:-2s!important}
+.np6{animation-delay:-2.5s!important}
+@keyframes nodePulse{0%{opacity:0.2;r:1.5}100%{opacity:0.9;r:3.5}}
 
-/* ═══ HUD CORNERS ═══ */
-.hud{position:fixed;inset:12px;pointer-events:none;z-index:1}
-.hud i{position:absolute;width:16px;height:16px;border-color:var(--ink-faint);border-style:solid;border-width:0}
+/* ═══ HUD ═══ */
+.hud{position:fixed;inset:10px;pointer-events:none;z-index:1}
+.hud i{position:absolute;width:18px;height:18px;border-color:var(--ink-faint);border-style:solid;border-width:0}
 .hud .tl{top:0;left:0;border-top-width:1px;border-left-width:1px}
 .hud .tr{top:0;right:0;border-top-width:1px;border-right-width:1px}
 .hud .bl{bottom:0;left:0;border-bottom-width:1px;border-left-width:1px}
 .hud .br{bottom:0;right:0;border-bottom-width:1px;border-right-width:1px}
+.hud-tag{position:fixed;font-size:7px;letter-spacing:0.4em;text-transform:uppercase;
+  color:var(--ink-dim);z-index:2;pointer-events:none;font-family:var(--mono);opacity:0.7}
+.hud-tag.top{top:14px;left:50%;transform:translateX(-50%)}
+.hud-tag.bot{bottom:14px;left:50%;transform:translateX(-50%)}
 
-.hud-tag{position:fixed;font-size:8px;letter-spacing:0.4em;text-transform:uppercase;
-  color:var(--ink-dim);z-index:2;pointer-events:none;font-family:var(--mono)}
-.hud-tag.top{top:16px;left:50%;transform:translateX(-50%)}
-.hud-tag.bot{bottom:16px;left:50%;transform:translateX(-50%)}
-
-/* ═══ SCREENS ═══ */
-.screen{position:fixed;inset:0;display:none;z-index:5;
-  flex-direction:column;align-items:center;justify-content:center;padding:20px}
-.screen.active{display:flex}
+/* ═══ SCREEN SYSTEM (Opacity transitions) ═══ */
+.screen{position:fixed;inset:0;z-index:5;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;
+  opacity:0;visibility:hidden;transition:opacity .35s ease,visibility .35s ease;
+  will-change:opacity;transform:translateZ(0)}
+.screen.active{opacity:1;visibility:visible}
 
 /* ═══ PREP ═══ */
-#prep{gap:20px;text-align:center}
-.prep-val{font-size:clamp(120px,30vw,200px);font-weight:700;color:var(--blood);
-  text-shadow:0 0 40px var(--blood-glow);line-height:1;
-  animation:prepPulse 1s cubic-bezier(0.4,0,0.2,1) infinite}
-@keyframes prepPulse{0%,100%{transform:scale(0.8);opacity:0.5}50%{transform:scale(1.1);opacity:1}}
-.prep-lbl{font-size:14px;letter-spacing:0.8em;color:var(--ink-dim);text-transform:uppercase}
+#prep{gap:16px;text-align:center}
+.prep-num{font-size:clamp(140px,35vw,220px);font-weight:700;color:var(--blood);
+  text-shadow:0 0 50px var(--blood-glow),0 0 120px var(--blood-dim);line-height:1;
+  transition:transform .15s ease,opacity .15s ease;transform:scale(1);opacity:1}
+.prep-num.pop{transform:scale(1.15);opacity:0.6}
+.prep-lbl{font-size:12px;letter-spacing:1em;color:var(--ink-dim);text-transform:uppercase}
 
-/* ═══ IDLE: NEUMORPHIC BUTTON ═══ */
-#idle{gap:40px;text-align:center}
+/* ═══ IDLE ═══ */
+#idle{gap:36px;text-align:center}
 .brand{font-family:'Space Grotesk',sans-serif;font-weight:700;
-  font-size:clamp(22px,6vw,32px);letter-spacing:0.4em;color:var(--gold);
-  text-shadow:0 0 12px var(--gold-glow)}
-.brand .sep{color:var(--blood);text-shadow:0 0 14px var(--blood-glow)}
+  font-size:clamp(22px,6vw,34px);letter-spacing:0.35em;color:var(--gold);
+  text-shadow:0 0 14px var(--gold-glow),0 0 40px var(--gold-dim)}
+.brand .sep{color:var(--blood);text-shadow:0 0 16px var(--blood-glow)}
+.brand .v{font-size:0.4em;color:var(--ink-dim);letter-spacing:0.2em;vertical-align:super;margin-left:6px}
 
 .neu-wrap{position:relative;display:grid;place-items:center}
 .neu-wrap::before{content:"";position:absolute;width:220px;height:220px;border-radius:50%;
-  border:1px solid var(--ink-faint);opacity:0.3;pointer-events:none}
+  border:1px solid var(--ink-faint);opacity:0.25;pointer-events:none}
 .neu-wrap::after{content:"";position:absolute;width:260px;height:260px;border-radius:50%;
-  border:1px dashed var(--ink-faint);opacity:0.15;animation:spin 60s linear infinite;pointer-events:none}
+  border:1px dashed var(--ink-faint);opacity:0.12;animation:spin 50s linear infinite;pointer-events:none}
 @keyframes spin{to{transform:rotate(360deg)}}
 
 .neu-btn{appearance:none;border:0;outline:0;cursor:pointer;
   width:180px;height:180px;border-radius:50%;
-  background:linear-gradient(145deg,#111111,#080808);color:var(--ink);font-family:var(--mono);
+  background:linear-gradient(145deg,#0f0f0f,#060606);color:var(--ink);font-family:var(--mono);
   display:grid;place-items:center;position:relative;z-index:10;
-  box-shadow:-10px -10px 24px var(--neu-hi),12px 12px 28px var(--neu-lo),
-    inset 0 0 0 1px rgba(255,255,255,0.03);
-  transition:box-shadow .1s ease,transform .1s ease;
+  box-shadow:
+    -12px -12px 30px var(--neu-hi),
+    14px 14px 35px var(--neu-lo),
+    inset 0 0 0 1px rgba(255,255,255,0.04),
+    0 0 60px rgba(199,0,57,0.08);
+  transition:box-shadow .12s ease,transform .12s ease;
   will-change:transform;transform:translateZ(0);touch-action:manipulation}
 .neu-btn:active{
-  box-shadow:inset -6px -6px 16px var(--neu-hi),inset 8px 8px 20px var(--neu-lo);
-  transform:translateZ(0) scale(0.97)}
+  box-shadow:inset -8px -8px 20px var(--neu-hi),inset 10px 10px 25px var(--neu-lo),
+    0 0 40px rgba(199,0,57,0.15);
+  transform:translateZ(0) scale(0.96)}
 .neu-btn .inner{display:flex;flex-direction:column;align-items:center;gap:10px;z-index:2}
 .neu-btn .dot{width:10px;height:10px;border-radius:50%;background:var(--blood);
-  box-shadow:0 0 16px var(--blood-glow),0 0 4px var(--blood);animation:breathe 2.4s ease-in-out infinite}
-@keyframes breathe{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(0.8);opacity:0.6}}
-.neu-btn .word{font-size:12px;letter-spacing:0.4em;text-transform:uppercase;color:var(--gold);
-  font-weight:700;text-shadow:0 0 8px var(--gold-glow)}
+  box-shadow:0 0 18px var(--blood-glow),0 0 5px var(--blood);animation:breathe 2.4s ease-in-out infinite}
+@keyframes breathe{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(0.7);opacity:0.5}}
+.neu-btn .word{font-size:13px;letter-spacing:0.35em;text-transform:uppercase;color:var(--gold);
+  font-weight:700;text-shadow:0 0 10px var(--gold-glow)}
 .neu-btn .sub{font-size:8px;letter-spacing:0.5em;color:var(--ink-dim);text-transform:uppercase}
 
-.hint{font-size:9px;letter-spacing:0.2em;color:var(--ink-dim);text-transform:uppercase;
-  display:flex;flex-direction:column;gap:4px;align-items:center}
+.hint{font-size:8px;letter-spacing:0.2em;color:var(--ink-dim);text-transform:uppercase;
+  display:flex;flex-direction:column;gap:5px;align-items:center;opacity:0.7}
 .hint span{display:flex;align-items:center;gap:8px}
-.hint span::before,.hint span::after{content:"";width:12px;height:1px;background:var(--ink-faint)}
+.hint span::before,.hint span::after{content:"";width:10px;height:1px;background:var(--ink-faint)}
 
-/* ═══ RUN: ZONA DE TOQUE ═══ */
+/* ═══ RUN ═══ */
 #run{cursor:pointer;background:var(--bg)}
+#run::before{content:"";position:absolute;inset:0;pointer-events:none;z-index:2;
+  background:radial-gradient(ellipse at center,transparent 50%,rgba(139,0,0,0.12) 100%)}
 
 .run-data{position:relative;z-index:3;display:flex;flex-direction:column;
-  align-items:center;gap:10px;pointer-events:none}
-.run-label{font-size:9px;letter-spacing:0.5em;color:var(--ink-dim);text-transform:uppercase;
+  align-items:center;gap:8px;pointer-events:none}
+.run-label{font-size:8px;letter-spacing:0.6em;color:var(--ink-dim);text-transform:uppercase;
   display:flex;align-items:center;gap:8px}
-.run-label::before,.run-label::after{content:"";width:12px;height:1px;background:var(--ink-faint)}
+.run-label::before,.run-label::after{content:"";width:14px;height:1px;background:var(--ink-faint)}
 
-.timer{font-weight:700;font-size:clamp(56px,14vw,90px);color:var(--gold);
+.timer{font-weight:700;font-size:clamp(54px,13vw,88px);color:var(--gold);
   font-variant-numeric:tabular-nums;letter-spacing:-0.03em;line-height:1;
-  text-shadow:0 0 18px var(--gold-glow),0 0 3px rgba(212,175,55,0.3)}
-.timer .u{font-size:0.3em;color:rgba(212,175,55,0.6);margin-left:3px;font-weight:400}
-.timer.warn{color:var(--blood);text-shadow:0 0 20px var(--blood-glow),0 0 5px var(--blood)}
+  text-shadow:0 0 20px var(--gold-glow),0 0 4px rgba(212,175,55,0.3)}
+.timer .u{font-size:0.28em;color:rgba(212,175,55,0.5);margin-left:2px;font-weight:400}
+.timer.warn{color:var(--blood);text-shadow:0 0 24px var(--blood-glow),0 0 6px var(--blood)}
 
-.divider{width:80px;height:1px;background:linear-gradient(90deg,transparent,var(--blood-dark),transparent);
-  margin:14px 0;opacity:0.4}
+.divider{width:70px;height:1px;background:linear-gradient(90deg,transparent,var(--blood-dark),transparent);
+  margin:12px 0;opacity:0.35}
 
-.bracket{position:relative;padding:12px 28px;display:inline-flex;flex-direction:column;align-items:center;gap:4px}
+.bracket{position:relative;padding:10px 26px;display:inline-flex;flex-direction:column;align-items:center;gap:4px}
 .bracket::before,.bracket::after{content:"";position:absolute;top:0;bottom:0;width:10px;
-  border-color:var(--blood-dark);border-style:solid;opacity:0.5}
+  border-color:var(--blood-dark);border-style:solid;opacity:0.4}
 .bracket::before{left:0;border-width:1px 0 1px 1px}
 .bracket::after{right:0;border-width:1px 1px 1px 0}
 
-.counter{font-weight:700;font-size:clamp(90px,26vw,170px);color:var(--gold);
+.counter{font-weight:700;font-size:clamp(88px,25vw,160px);color:var(--gold);
   font-variant-numeric:tabular-nums;letter-spacing:-0.04em;line-height:0.85;
-  text-shadow:0 0 22px var(--gold-glow),0 0 4px rgba(212,175,55,0.2);
+  text-shadow:0 0 24px var(--gold-glow),0 0 5px rgba(212,175,55,0.2);
   will-change:transform;transform:translateZ(0)}
-.counter.flash{animation:cflash 80ms ease-out}
-@keyframes cflash{0%{transform:translateZ(0) scale(1.06)}100%{transform:translateZ(0) scale(1)}}
-.counter-lbl{font-size:9px;letter-spacing:0.5em;color:var(--ink-dim);text-transform:uppercase}
+.counter.bump{animation:bump 60ms ease-out}
+@keyframes bump{0%{transform:translateZ(0) scale(1.08)}100%{transform:translateZ(0) scale(1)}}
+.counter-lbl{font-size:8px;letter-spacing:0.6em;color:var(--ink-dim);text-transform:uppercase}
 
-/* Estado Capturando */
-.state-tag{position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:6;
-  font-size:9px;letter-spacing:0.4em;color:var(--ink-dim);text-transform:uppercase;
-  display:none;align-items:center;gap:8px;pointer-events:none}
-#run.active~.state-tag{display:flex}
+/* State indicator */
+.state-tag{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:8;
+  font-size:8px;letter-spacing:0.5em;color:var(--ink-dim);text-transform:uppercase;
+  opacity:0;transition:opacity .3s;pointer-events:none;display:flex;align-items:center;gap:8px}
+.state-tag.on{opacity:1}
 .state-tag .blink{width:5px;height:5px;border-radius:50%;background:var(--blood);
   box-shadow:0 0 10px var(--blood-glow);animation:blink 1s ease-in-out infinite}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.15}}
 
-/* ═══ RIPPLE + SCREEN FLASH (iOS Fallback) ═══ */
-.ripple{position:absolute;width:100px;height:100px;border-radius:50%;pointer-events:none;z-index:4;
-  background:radial-gradient(circle,var(--blood-glow),transparent 65%);
-  transform:translate(-50%,-50%) scale(0) translateZ(0);opacity:0.9;
-  animation:rip .4s cubic-bezier(0.22,0.61,0.36,1) forwards;will-change:transform,opacity}
+/* ═══ RIPPLE POOL (Zero DOM Thrashing) ═══ */
+.rp{position:absolute;width:90px;height:90px;border-radius:50%;pointer-events:none;z-index:4;
+  background:radial-gradient(circle,var(--blood-glow),transparent 60%);
+  opacity:0;transform:translate(-50%,-50%) scale(0) translateZ(0);
+  will-change:transform,opacity}
+.rp.fire{animation:rip .35s cubic-bezier(0.22,0.61,0.36,1) forwards}
 @keyframes rip{
-  0%{transform:translate(-50%,-50%) scale(0) translateZ(0);opacity:1}
-  60%{opacity:0.5}
-  100%{transform:translate(-50%,-50%) scale(2.5) translateZ(0);opacity:0}}
+  0%{transform:translate(-50%,-50%) scale(0) translateZ(0);opacity:0.95}
+  50%{opacity:0.4}
+  100%{transform:translate(-50%,-50%) scale(2.8) translateZ(0);opacity:0}}
 
-.screen-flash{position:fixed;inset:0;background:rgba(199,0,57,0.15);pointer-events:none;z-index:10;
-  animation:sflash 120ms ease-out forwards;will-change:opacity;transform:translateZ(0)}
+/* Screen flash overlay (single reusable element) */
+.flash-overlay{position:fixed;inset:0;pointer-events:none;z-index:12;
+  background:rgba(199,0,57,0.14);opacity:0;
+  will-change:opacity;transform:translateZ(0);transition:none}
+.flash-overlay.fire{animation:sflash 100ms ease-out forwards}
 @keyframes sflash{0%{opacity:1}100%{opacity:0}}
 
 /* ═══ RESULT ═══ */
-#result{gap:24px;text-align:center}
-.res-eye{font-size:9px;letter-spacing:0.5em;color:var(--ink-dim);text-transform:uppercase;
+#result{gap:22px;text-align:center}
+.res-eye{font-size:8px;letter-spacing:0.6em;color:var(--ink-dim);text-transform:uppercase;
   display:flex;align-items:center;gap:10px}
-.res-eye::before,.res-eye::after{content:"";width:16px;height:1px;background:var(--ink-faint)}
-.res-frame{position:relative;padding:24px 36px;display:inline-flex;flex-direction:column;align-items:center;gap:6px}
-.res-frame::before,.res-frame::after{content:"";position:absolute;top:0;bottom:0;width:12px;
-  border-color:var(--blood-dark);border-style:solid;opacity:0.5}
+.res-eye::before,.res-eye::after{content:"";width:18px;height:1px;background:var(--ink-faint)}
+.res-frame{position:relative;padding:20px 32px;display:inline-flex;flex-direction:column;align-items:center;gap:6px}
+.res-frame::before,.res-frame::after{content:"";position:absolute;top:0;bottom:0;width:10px;
+  border-color:var(--blood-dark);border-style:solid;opacity:0.45}
 .res-frame::before{left:0;border-width:1px 0 1px 1px}
 .res-frame::after{right:0;border-width:1px 1px 1px 0}
-.res-num{font-weight:700;font-size:clamp(90px,24vw,170px);color:var(--gold);
+.res-num{font-weight:700;font-size:clamp(88px,24vw,160px);color:var(--gold);
   font-variant-numeric:tabular-nums;letter-spacing:-0.04em;line-height:0.9;
-  text-shadow:0 0 26px var(--gold-glow),0 0 5px rgba(212,175,55,0.25)}
-.res-lbl{font-size:10px;letter-spacing:0.4em;color:rgba(212,175,55,0.6);text-transform:uppercase}
-.res-meta{display:flex;gap:28px;font-size:9px;letter-spacing:0.3em;color:var(--ink-dim);
-  text-transform:uppercase;margin-top:6px}
+  text-shadow:0 0 28px var(--gold-glow),0 0 6px rgba(212,175,55,0.3)}
+.res-lbl{font-size:9px;letter-spacing:0.5em;color:rgba(212,175,55,0.55);text-transform:uppercase}
+.res-meta{display:flex;gap:24px;font-size:8px;letter-spacing:0.3em;color:var(--ink-dim);
+  text-transform:uppercase;margin-top:4px}
 .res-meta .v{display:block;color:var(--ink);font-size:14px;letter-spacing:0.05em;margin-top:3px;
   font-variant-numeric:tabular-nums}
 .reset-btn{appearance:none;border:1px solid var(--ink-faint);background:transparent;
-  color:var(--ink-dim);font-family:var(--mono);font-size:9px;letter-spacing:0.4em;text-transform:uppercase;
-  padding:11px 24px;cursor:pointer;margin-top:12px;transition:border-color .15s,color .15s;
+  color:var(--ink-dim);font-family:var(--mono);font-size:8px;letter-spacing:0.5em;text-transform:uppercase;
+  padding:12px 26px;cursor:pointer;margin-top:10px;
+  transition:border-color .2s,color .2s,box-shadow .2s;
   z-index:10;touch-action:manipulation}
-.reset-btn:active{border-color:var(--blood);color:var(--blood)}
+.reset-btn:active{border-color:var(--blood);color:var(--blood);
+  box-shadow:0 0 20px rgba(199,0,57,0.15)}
 </style>
 </head>
 <body>
 
-<!-- TEIA NEURAL SVG -->
+<!-- NEURAL MESH SVG (Alive) -->
 <svg class="neural-bg" viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice">
-<defs><filter id="g"><feGaussianBlur stdDeviation="1.5"/></filter></defs>
-<g stroke="#8B0000" stroke-width="0.7" fill="none" filter="url(#g)">
-<path d="M60,50 Q90,130 130,200 T210,350 L250,460" stroke-width="1"/>
-<path d="M160,30 Q180,100 200,170 T240,290 L270,400 Q290,480 320,560"/>
-<path d="M90,180 Q110,240 140,310 T190,430 L220,530"/>
-<path d="M220,80 Q250,150 280,230 T330,370 L360,480"/>
-<path d="M40,280 Q70,350 110,420 T170,550 L200,660"/>
-<path d="M270,140 Q290,210 310,280 T340,400 L370,510 Q385,590 395,670"/>
-<path d="M130,330 Q150,400 180,460 T220,570 L250,670"/>
-<path d="M20,500 Q50,560 90,620 T150,740"/>
-<path d="M300,300 Q320,360 340,430 T380,560"/>
-<path d="M180,600 Q210,660 240,720 T300,790"/>
+<defs><filter id="g"><feGaussianBlur stdDeviation="1.2"/></filter></defs>
+<g stroke="#8B0000" stroke-width="0.6" fill="none" filter="url(#g)">
+<path d="M60,50 Q90,130 130,200 T210,350 L250,460" stroke-width="0.9"/>
+<path class="n2" d="M160,30 Q180,100 200,170 T240,290 L270,400 Q290,480 320,560"/>
+<path class="n3" d="M90,180 Q110,240 140,310 T190,430 L220,530"/>
+<path class="n4" d="M220,80 Q250,150 280,230 T330,370 L360,480"/>
+<path class="n5" d="M40,280 Q70,350 110,420 T170,550 L200,660"/>
+<path class="n6" d="M270,140 Q290,210 310,280 T340,400 L370,510 Q385,590 395,670"/>
+<path class="n7" d="M130,330 Q150,400 180,460 T220,570 L250,670"/>
+<path class="n8" d="M20,500 Q50,560 90,620 T150,740"/>
+<path class="n9" d="M300,300 Q320,360 340,430 T380,560"/>
+<path class="n10" d="M180,600 Q210,660 240,720 T300,790"/>
 </g>
 <g fill="#C70039">
-<circle cx="130" cy="200" r="2.5" opacity="0.7"/><circle cx="210" cy="350" r="3" opacity="0.6"/>
-<circle cx="200" cy="170" r="2" opacity="0.5"/><circle cx="270" cy="400" r="2.5" opacity="0.7"/>
-<circle cx="140" cy="310" r="2" opacity="0.6"/><circle cx="280" cy="230" r="2.5" opacity="0.5"/>
-<circle cx="110" cy="420" r="2" opacity="0.5"/><circle cx="310" cy="280" r="2" opacity="0.6"/>
-<circle cx="180" cy="460" r="2.5" opacity="0.7"/><circle cx="370" cy="510" r="3" opacity="0.6"/>
-<circle cx="90" cy="620" r="2" opacity="0.5"/><circle cx="240" cy="720" r="2.5" opacity="0.6"/>
+<circle cx="130" cy="200" r="2.5"/>
+<circle class="np2" cx="210" cy="350" r="3"/>
+<circle class="np3" cx="200" cy="170" r="2"/>
+<circle class="np4" cx="270" cy="400" r="2.5"/>
+<circle class="np5" cx="140" cy="310" r="2"/>
+<circle class="np6" cx="280" cy="230" r="2.5"/>
+<circle cx="110" cy="420" r="2"/>
+<circle class="np2" cx="310" cy="280" r="2"/>
+<circle class="np4" cx="180" cy="460" r="2.5"/>
+<circle class="np5" cx="370" cy="510" r="3"/>
+<circle class="np3" cx="90" cy="620" r="2"/>
+<circle class="np6" cx="240" cy="720" r="2.5"/>
 </g>
 </svg>
 
 <!-- HUD -->
 <div class="hud"><i class="tl"></i><i class="tr"></i><i class="bl"></i><i class="br"></i></div>
 <span class="hud-tag top">M1 Probe // Córtex Motor Primário</span>
-<span class="hud-tag bot">Mushin Sports — FTT v2.0</span>
+<span class="hud-tag bot">Mushin Sports — FTT v3.0</span>
 
-<!-- STATE 1: IDLE -->
+<!-- FLASH OVERLAY (Reusable, zero DOM creation) -->
+<div class="flash-overlay" id="flash"></div>
+
+<!-- RIPPLE POOL (10 pre-created, zero GC) -->
+<div id="ripplePool" style="position:fixed;inset:0;z-index:4;pointer-events:none;overflow:hidden">
+<div class="rp"></div><div class="rp"></div><div class="rp"></div><div class="rp"></div><div class="rp"></div>
+<div class="rp"></div><div class="rp"></div><div class="rp"></div><div class="rp"></div><div class="rp"></div>
+</div>
+
+<!-- STATE: IDLE -->
 <div class="screen active" id="idle">
-  <div class="brand">MUSHIN <span class="sep">//</span> FTT</div>
+  <div class="brand">MUSHIN <span class="sep">//</span> FTT<span class="v">v3</span></div>
   <div class="neu-wrap">
     <button class="neu-btn" id="connectBtn" type="button">
       <div class="inner">
@@ -225,147 +262,183 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);
   </div>
 </div>
 
-<!-- STATE 1.5: PREP -->
+<!-- STATE: PREP -->
 <div class="screen" id="prep">
-  <span class="prep-val" id="prepVal">3</span>
+  <span class="prep-num" id="prepVal">3</span>
   <span class="prep-lbl">Preparar</span>
 </div>
 
-<!-- STATE 2: RUN -->
+<!-- STATE: RUN -->
 <div class="screen" id="run">
   <div class="run-data">
-    <span class="run-label">Tempo</span>
+    <span class="run-label">Captura</span>
     <span class="timer" id="timer"><span id="timerVal">10.0</span><span class="u">s</span></span>
     <div class="divider"></div>
     <div class="bracket">
       <span class="counter" id="counterVal">0</span>
-      <span class="counter-lbl">Toques</span>
+      <span class="counter-lbl">Impulsos</span>
     </div>
   </div>
 </div>
-<div class="state-tag"><span class="blink"></span>Capturando</div>
+<div class="state-tag" id="stateTag"><span class="blink"></span>Capturando</div>
 
-<!-- STATE 3: RESULT -->
+<!-- STATE: RESULT -->
 <div class="screen" id="result">
-  <span class="res-eye">Resultado</span>
+  <span class="res-eye">Análise Concluída</span>
   <div class="res-frame">
     <span class="res-num" id="resultNum">0</span>
-    <span class="res-lbl">Total Toques</span>
+    <span class="res-lbl">Total Impulsos</span>
   </div>
   <div class="res-meta">
     <div>Janela<span class="v" id="metaWin">10s</span></div>
     <div>Taxa<span class="v" id="metaRate">0.0/s</span></div>
   </div>
-  <button class="reset-btn" id="resetBtn" type="button">Reiniciar</button>
+  <button class="reset-btn" id="resetBtn" type="button">Nova Captura</button>
 </div>
 
 <script>
-/* MUSHIN FTT ENGINE v2.0 — ZERO LATENCY + HAPTIC + NEURAL */
+/* ═══════════════════════════════════════════════════
+   MUSHIN FTT ENGINE v3.0 — WORLD-CLASS ZERO LATENCY
+   Nexus Engineering — Performance-First Architecture
+   ═══════════════════════════════════════════════════ */
+
 const $=s=>document.querySelector(s);
 const DUR=10;
 let state='idle',startT=0,taps=0,rafId=0,endId=0;
 
-const idle=$('#idle'),prep=$('#prep'),run=$('#run'),res=$('#result');
+// Cache every DOM reference once (zero lookups during hot path)
+const screens={idle:$('#idle'),prep:$('#prep'),run:$('#run'),result:$('#result')};
 const timerEl=$('#timerVal'),timerW=$('#timer'),cntEl=$('#counterVal');
 const resNum=$('#resultNum'),metaWin=$('#metaWin'),metaRate=$('#metaRate');
-const prepVal=$('#prepVal');
+const prepEl=$('#prepVal'),stateTag=$('#stateTag'),flashEl=$('#flash');
 
-function show(n){
-  [idle,prep,run,res].forEach(e=>e.classList.remove('active'));
-  state=n;
-  if(n==='idle')idle.classList.add('active');
-  else if(n==='prep')prep.classList.add('active');
-  else if(n==='run')run.classList.add('active');
-  else if(n==='result')res.classList.add('active');
+// ═══ RIPPLE OBJECT POOL ═══
+const ripples=[...document.querySelectorAll('.rp')];
+let rippleIdx=0;
+
+function fireRipple(x,y){
+  const r=ripples[rippleIdx];
+  rippleIdx=(rippleIdx+1)%ripples.length;
+  r.classList.remove('fire');
+  r.style.left=x+'px';r.style.top=y+'px';
+  void r.offsetWidth; // force reflow — single element, negligible cost
+  r.classList.add('fire');
 }
 
+function fireFlash(){
+  flashEl.classList.remove('fire');
+  void flashEl.offsetWidth;
+  flashEl.classList.add('fire');
+}
+
+// ═══ SCREEN TRANSITIONS ═══
+function show(name){
+  const prev=state;state=name;
+  Object.values(screens).forEach(s=>s.classList.remove('active'));
+  screens[name].classList.add('active');
+  stateTag.classList.toggle('on',name==='run');
+}
+
+// ═══ PREP COUNTDOWN ═══
+let prepLock=false;
 function startPrep(){
+  if(prepLock)return;
+  prepLock=true;
   let c=3;
-  prepVal.textContent=c;
+  prepEl.textContent=c;
   if(navigator.vibrate)navigator.vibrate(50);
   show('prep');
+
+  // Pop animation per tick
+  function popNum(){prepEl.classList.add('pop');setTimeout(()=>prepEl.classList.remove('pop'),150)}
+
   const iv=setInterval(()=>{
     c--;
     if(c>0){
-      prepVal.textContent=c;
+      popNum();
+      setTimeout(()=>{prepEl.textContent=c},80);
       if(navigator.vibrate)navigator.vibrate(50);
     }else{
       clearInterval(iv);
-      if(navigator.vibrate)navigator.vibrate([100,50,100]);
+      if(navigator.vibrate)navigator.vibrate([80,40,80]);
+      prepLock=false;
       go();
     }
   },1000);
 }
 
+// ═══ TEST ENGINE (requestAnimationFrame + performance.now) ═══
 function go(){
-  taps=0;cntEl.textContent='0';
+  taps=0;
+  cntEl.textContent='0';
   timerEl.textContent=DUR.toFixed(1);
   timerW.classList.remove('warn');
   show('run');
   startT=performance.now();
-  function tick(){
-    const el=(performance.now()-startT)/1000;
-    const rem=Math.max(0,DUR-el);
+
+  function tick(now){
+    const elapsed=(now-startT)*0.001; // multiply faster than divide
+    const rem=DUR-elapsed;
+    if(rem<=0){
+      timerEl.textContent='0.0';
+      end();return;
+    }
     timerEl.textContent=rem.toFixed(1);
-    if(rem<=3)timerW.classList.add('warn');
-    if(rem>0)rafId=requestAnimationFrame(tick);
+    if(rem<=3&&!timerW.classList.contains('warn'))timerW.classList.add('warn');
+    rafId=requestAnimationFrame(tick);
   }
   rafId=requestAnimationFrame(tick);
-  endId=setTimeout(end,DUR*1000);
+  // Safety net: setTimeout as hard stop (rAF can drift on background tabs)
+  endId=setTimeout(end,DUR*1000+50);
 }
 
 function end(){
   cancelAnimationFrame(rafId);clearTimeout(endId);
+  state='done'; // block any in-flight taps
   resNum.textContent=String(taps);
   metaWin.textContent=DUR+'s';
   metaRate.textContent=(taps/DUR).toFixed(1)+'/s';
-  show('result');
+  // Small delay for dramatic reveal
+  setTimeout(()=>show('result'),200);
 }
 
+// ═══ TAP HANDLER (Fastest possible path) ═══
 function tap(x,y){
   if(state!=='run')return;
   taps++;
-  cntEl.textContent=String(taps);
-  cntEl.classList.remove('flash');void cntEl.offsetWidth;cntEl.classList.add('flash');
-
-  // Ripple GPU-accelerated
-  const r=document.createElement('div');r.className='ripple';
-  r.style.left=x+'px';r.style.top=y+'px';
-  run.appendChild(r);setTimeout(()=>r.remove(),450);
-
-  // Screen Flash (iOS fallback — violento e imediato)
-  const f=document.createElement('div');f.className='screen-flash';
-  document.body.appendChild(f);setTimeout(()=>f.remove(),130);
-
-  // Haptic Android (50ms)
+  // Direct textContent write (fastest DOM update)
+  cntEl.textContent=taps;
+  // Visual bump
+  cntEl.classList.remove('bump');void cntEl.offsetWidth;cntEl.classList.add('bump');
+  // Pooled ripple + single flash element
+  fireRipple(x,y);
+  fireFlash();
+  // Haptic 50ms
   if(navigator.vibrate)navigator.vibrate(50);
 }
 
-// CONNECT — click funciona em tudo (mobile+desktop) sem delay com meta viewport
-let prepLock=false;
-$('#connectBtn').addEventListener('click',e=>{
+// ═══ EVENT BINDING ═══
+
+// Connect button — click (universal, zero-delay with viewport meta)
+$('#connectBtn').addEventListener('click',e=>{e.preventDefault();startPrep()});
+
+// Tap zone — touchstart for absolute minimum latency
+screens.run.addEventListener('touchstart',e=>{
   e.preventDefault();
-  if(prepLock)return;
-  prepLock=true;
-  startPrep();
-  setTimeout(()=>{prepLock=false},4500);
+  const t=e.changedTouches;
+  for(let i=0;i<t.length;i++)tap(t[i].clientX,t[i].clientY);
+},{passive:false});
+
+// Mouse fallback (desktop testing)
+screens.run.addEventListener('mousedown',e=>{
+  if('ontouchstart' in window)return;
+  tap(e.clientX,e.clientY);
 });
 
-// TAP CAPTURE — touchstart para latência zero
-run.addEventListener('touchstart',e=>{
-  e.preventDefault();
-  for(const t of e.changedTouches)tap(t.clientX,t.clientY);
-},{passive:false});
-
-// Fallback mouse
-run.addEventListener('pointerdown',e=>{
-  if(e.pointerType==='touch')return;
-  e.preventDefault();tap(e.clientX,e.clientY);
-},{passive:false});
-
-// RESET — click simples
+// Reset
 $('#resetBtn').addEventListener('click',e=>{e.preventDefault();show('idle')});
 
+// Init
 show('idle');
 </script>
 </body>
