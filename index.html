@@ -49,6 +49,14 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);
   flex-direction:column;align-items:center;justify-content:center;padding:20px}
 .screen.active{display:flex}
 
+/* ═══ PREP ═══ */
+#prep{gap:20px;text-align:center}
+.prep-val{font-size:clamp(120px,30vw,200px);font-weight:700;color:var(--blood);
+  text-shadow:0 0 40px var(--blood-glow);line-height:1;
+  animation:prepPulse 1s cubic-bezier(0.4,0,0.2,1) infinite}
+@keyframes prepPulse{0%,100%{transform:scale(0.8);opacity:0.5}50%{transform:scale(1.1);opacity:1}}
+.prep-lbl{font-size:14px;letter-spacing:0.8em;color:var(--ink-dim);text-transform:uppercase}
+
 /* ═══ IDLE: NEUMORPHIC BUTTON ═══ */
 #idle{gap:40px;text-align:center}
 .brand{font-family:'Space Grotesk',sans-serif;font-weight:700;
@@ -216,6 +224,12 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);
   </div>
 </div>
 
+<!-- STATE 1.5: PREP -->
+<div class="screen" id="prep">
+  <span class="prep-val" id="prepVal">3</span>
+  <span class="prep-lbl">Preparar</span>
+</div>
+
 <!-- STATE 2: RUN -->
 <div class="screen" id="run">
   <div class="run-data">
@@ -250,16 +264,36 @@ const $=s=>document.querySelector(s);
 const DUR=10;
 let state='idle',startT=0,taps=0,rafId=0,endId=0;
 
-const idle=$('#idle'),run=$('#run'),res=$('#result');
+const idle=$('#idle'),prep=$('#prep'),run=$('#run'),res=$('#result');
 const timerEl=$('#timerVal'),timerW=$('#timer'),cntEl=$('#counterVal');
 const resNum=$('#resultNum'),metaWin=$('#metaWin'),metaRate=$('#metaRate');
+const prepVal=$('#prepVal');
 
 function show(n){
-  [idle,run,res].forEach(e=>e.classList.remove('active'));
+  [idle,prep,run,res].forEach(e=>e.classList.remove('active'));
   state=n;
   if(n==='idle')idle.classList.add('active');
+  else if(n==='prep')prep.classList.add('active');
   else if(n==='run')run.classList.add('active');
   else if(n==='result')res.classList.add('active');
+}
+
+function startPrep(){
+  let c=3;
+  prepVal.textContent=c;
+  if(navigator.vibrate)navigator.vibrate(50);
+  show('prep');
+  const iv=setInterval(()=>{
+    c--;
+    if(c>0){
+      prepVal.textContent=c;
+      if(navigator.vibrate)navigator.vibrate(50);
+    }else{
+      clearInterval(iv);
+      if(navigator.vibrate)navigator.vibrate([100,50,100]);
+      go();
+    }
+  },1000);
 }
 
 function go(){
@@ -307,7 +341,7 @@ function tap(x,y){
 }
 
 // CONNECT
-$('#connectBtn').addEventListener('pointerdown',e=>{e.preventDefault();go()},{passive:false});
+$('#connectBtn').addEventListener('pointerdown',e=>{e.preventDefault();startPrep()},{passive:false});
 
 // TAP CAPTURE — touchstart para latência zero
 run.addEventListener('touchstart',e=>{
