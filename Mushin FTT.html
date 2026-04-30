@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<title>MUSHIN // FTT</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#000000;
+  --blood:#C70039;
+  --blood-dark:#8B0000;
+  --blood-glow:rgba(199,0,57,0.6);
+  --gold:#D4AF37;
+  --gold-glow:rgba(212,175,55,0.45);
+  --ink:#e0e0e0;
+  --ink-dim:#555;
+  --ink-faint:#2a2a2a;
+  --neu-hi:rgba(255,255,255,0.06);
+  --neu-lo:rgba(0,0,0,0.85);
+  --mono:'JetBrains Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);
+  font-family:var(--mono);user-select:none;-webkit-user-select:none;
+  touch-action:manipulation;overscroll-behavior:none}
+
+/* ═══ TEIA NEURAL (SVG Background) ═══ */
+.neural-bg{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.4}
+
+/* ═══ HUD CORNERS ═══ */
+.hud{position:fixed;inset:12px;pointer-events:none;z-index:1}
+.hud i{position:absolute;width:16px;height:16px;border-color:var(--ink-faint);border-style:solid;border-width:0}
+.hud .tl{top:0;left:0;border-top-width:1px;border-left-width:1px}
+.hud .tr{top:0;right:0;border-top-width:1px;border-right-width:1px}
+.hud .bl{bottom:0;left:0;border-bottom-width:1px;border-left-width:1px}
+.hud .br{bottom:0;right:0;border-bottom-width:1px;border-right-width:1px}
+
+.hud-tag{position:fixed;font-size:8px;letter-spacing:0.4em;text-transform:uppercase;
+  color:var(--ink-dim);z-index:2;pointer-events:none;font-family:var(--mono)}
+.hud-tag.top{top:16px;left:50%;transform:translateX(-50%)}
+.hud-tag.bot{bottom:16px;left:50%;transform:translateX(-50%)}
+
+/* ═══ SCREENS ═══ */
+.screen{position:fixed;inset:0;display:none;z-index:5;
+  flex-direction:column;align-items:center;justify-content:center;padding:20px}
+.screen.active{display:flex}
+
+/* ═══ IDLE: NEUMORPHIC BUTTON ═══ */
+#idle{gap:40px;text-align:center}
+.brand{font-family:'Space Grotesk',sans-serif;font-weight:700;
+  font-size:clamp(22px,6vw,32px);letter-spacing:0.4em;color:var(--gold);
+  text-shadow:0 0 12px var(--gold-glow)}
+.brand .sep{color:var(--blood);text-shadow:0 0 14px var(--blood-glow)}
+
+.neu-wrap{position:relative;display:grid;place-items:center}
+.neu-wrap::before{content:"";position:absolute;width:220px;height:220px;border-radius:50%;
+  border:1px solid var(--ink-faint);opacity:0.3}
+.neu-wrap::after{content:"";position:absolute;width:260px;height:260px;border-radius:50%;
+  border:1px dashed var(--ink-faint);opacity:0.15;animation:spin 60s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.neu-btn{appearance:none;border:0;outline:0;cursor:pointer;
+  width:180px;height:180px;border-radius:50%;
+  background:linear-gradient(145deg,#111111,#080808);color:var(--ink);font-family:var(--mono);
+  display:grid;place-items:center;position:relative;
+  box-shadow:-10px -10px 24px var(--neu-hi),12px 12px 28px var(--neu-lo),
+    inset 0 0 0 1px rgba(255,255,255,0.03);
+  transition:box-shadow .1s ease,transform .1s ease;
+  will-change:transform;transform:translateZ(0)}
+.neu-btn:active{
+  box-shadow:inset -6px -6px 16px var(--neu-hi),inset 8px 8px 20px var(--neu-lo);
+  transform:translateZ(0) scale(0.97)}
+.neu-btn .inner{display:flex;flex-direction:column;align-items:center;gap:10px;z-index:2}
+.neu-btn .dot{width:10px;height:10px;border-radius:50%;background:var(--blood);
+  box-shadow:0 0 16px var(--blood-glow),0 0 4px var(--blood);animation:breathe 2.4s ease-in-out infinite}
+@keyframes breathe{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(0.8);opacity:0.6}}
+.neu-btn .word{font-size:12px;letter-spacing:0.4em;text-transform:uppercase;color:var(--gold);
+  font-weight:700;text-shadow:0 0 8px var(--gold-glow)}
+.neu-btn .sub{font-size:8px;letter-spacing:0.5em;color:var(--ink-dim);text-transform:uppercase}
+
+.hint{font-size:9px;letter-spacing:0.2em;color:var(--ink-dim);text-transform:uppercase;
+  display:flex;flex-direction:column;gap:4px;align-items:center}
+.hint span{display:flex;align-items:center;gap:8px}
+.hint span::before,.hint span::after{content:"";width:12px;height:1px;background:var(--ink-faint)}
+
+/* ═══ RUN: ZONA DE TOQUE ═══ */
+#run{cursor:pointer;background:var(--bg)}
+
+.run-data{position:relative;z-index:3;display:flex;flex-direction:column;
+  align-items:center;gap:10px;pointer-events:none}
+.run-label{font-size:9px;letter-spacing:0.5em;color:var(--ink-dim);text-transform:uppercase;
+  display:flex;align-items:center;gap:8px}
+.run-label::before,.run-label::after{content:"";width:12px;height:1px;background:var(--ink-faint)}
+
+.timer{font-weight:700;font-size:clamp(56px,14vw,90px);color:var(--gold);
+  font-variant-numeric:tabular-nums;letter-spacing:-0.03em;line-height:1;
+  text-shadow:0 0 18px var(--gold-glow),0 0 3px rgba(212,175,55,0.3)}
+.timer .u{font-size:0.3em;color:rgba(212,175,55,0.6);margin-left:3px;font-weight:400}
+.timer.warn{color:var(--blood);text-shadow:0 0 20px var(--blood-glow),0 0 5px var(--blood)}
+
+.divider{width:80px;height:1px;background:linear-gradient(90deg,transparent,var(--blood-dark),transparent);
+  margin:14px 0;opacity:0.4}
+
+.bracket{position:relative;padding:12px 28px;display:inline-flex;flex-direction:column;align-items:center;gap:4px}
+.bracket::before,.bracket::after{content:"";position:absolute;top:0;bottom:0;width:10px;
+  border-color:var(--blood-dark);border-style:solid;opacity:0.5}
+.bracket::before{left:0;border-width:1px 0 1px 1px}
+.bracket::after{right:0;border-width:1px 1px 1px 0}
+
+.counter{font-weight:700;font-size:clamp(90px,26vw,170px);color:var(--gold);
+  font-variant-numeric:tabular-nums;letter-spacing:-0.04em;line-height:0.85;
+  text-shadow:0 0 22px var(--gold-glow),0 0 4px rgba(212,175,55,0.2);
+  will-change:transform;transform:translateZ(0)}
+.counter.flash{animation:cflash 80ms ease-out}
+@keyframes cflash{0%{transform:translateZ(0) scale(1.06)}100%{transform:translateZ(0) scale(1)}}
+.counter-lbl{font-size:9px;letter-spacing:0.5em;color:var(--ink-dim);text-transform:uppercase}
+
+/* Estado Capturando */
+.state-tag{position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:6;
+  font-size:9px;letter-spacing:0.4em;color:var(--ink-dim);text-transform:uppercase;
+  display:none;align-items:center;gap:8px;pointer-events:none}
+#run.active~.state-tag{display:flex}
+.state-tag .blink{width:5px;height:5px;border-radius:50%;background:var(--blood);
+  box-shadow:0 0 10px var(--blood-glow);animation:blink 1s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
+
+/* ═══ RIPPLE + SCREEN FLASH (iOS Fallback) ═══ */
+.ripple{position:absolute;width:100px;height:100px;border-radius:50%;pointer-events:none;z-index:4;
+  background:radial-gradient(circle,var(--blood-glow),transparent 65%);
+  transform:translate(-50%,-50%) scale(0) translateZ(0);opacity:0.9;
+  animation:rip .4s cubic-bezier(0.22,0.61,0.36,1) forwards;will-change:transform,opacity}
+@keyframes rip{
+  0%{transform:translate(-50%,-50%) scale(0) translateZ(0);opacity:1}
+  60%{opacity:0.5}
+  100%{transform:translate(-50%,-50%) scale(2.5) translateZ(0);opacity:0}}
+
+.screen-flash{position:fixed;inset:0;background:rgba(199,0,57,0.15);pointer-events:none;z-index:10;
+  animation:sflash 120ms ease-out forwards;will-change:opacity;transform:translateZ(0)}
+@keyframes sflash{0%{opacity:1}100%{opacity:0}}
+
+/* ═══ RESULT ═══ */
+#result{gap:24px;text-align:center}
+.res-eye{font-size:9px;letter-spacing:0.5em;color:var(--ink-dim);text-transform:uppercase;
+  display:flex;align-items:center;gap:10px}
+.res-eye::before,.res-eye::after{content:"";width:16px;height:1px;background:var(--ink-faint)}
+.res-frame{position:relative;padding:24px 36px;display:inline-flex;flex-direction:column;align-items:center;gap:6px}
+.res-frame::before,.res-frame::after{content:"";position:absolute;top:0;bottom:0;width:12px;
+  border-color:var(--blood-dark);border-style:solid;opacity:0.5}
+.res-frame::before{left:0;border-width:1px 0 1px 1px}
+.res-frame::after{right:0;border-width:1px 1px 1px 0}
+.res-num{font-weight:700;font-size:clamp(90px,24vw,170px);color:var(--gold);
+  font-variant-numeric:tabular-nums;letter-spacing:-0.04em;line-height:0.9;
+  text-shadow:0 0 26px var(--gold-glow),0 0 5px rgba(212,175,55,0.25)}
+.res-lbl{font-size:10px;letter-spacing:0.4em;color:rgba(212,175,55,0.6);text-transform:uppercase}
+.res-meta{display:flex;gap:28px;font-size:9px;letter-spacing:0.3em;color:var(--ink-dim);
+  text-transform:uppercase;margin-top:6px}
+.res-meta .v{display:block;color:var(--ink);font-size:14px;letter-spacing:0.05em;margin-top:3px;
+  font-variant-numeric:tabular-nums}
+.reset-btn{appearance:none;border:1px solid var(--ink-faint);background:transparent;
+  color:var(--ink-dim);font-family:var(--mono);font-size:9px;letter-spacing:0.4em;text-transform:uppercase;
+  padding:11px 24px;cursor:pointer;margin-top:12px;transition:border-color .15s,color .15s}
+.reset-btn:active{border-color:var(--blood);color:var(--blood)}
+</style>
+</head>
+<body>
+
+<!-- TEIA NEURAL SVG -->
+<svg class="neural-bg" viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice">
+<defs><filter id="g"><feGaussianBlur stdDeviation="1.5"/></filter></defs>
+<g stroke="#8B0000" stroke-width="0.7" fill="none" filter="url(#g)">
+<path d="M60,50 Q90,130 130,200 T210,350 L250,460" stroke-width="1"/>
+<path d="M160,30 Q180,100 200,170 T240,290 L270,400 Q290,480 320,560"/>
+<path d="M90,180 Q110,240 140,310 T190,430 L220,530"/>
+<path d="M220,80 Q250,150 280,230 T330,370 L360,480"/>
+<path d="M40,280 Q70,350 110,420 T170,550 L200,660"/>
+<path d="M270,140 Q290,210 310,280 T340,400 L370,510 Q385,590 395,670"/>
+<path d="M130,330 Q150,400 180,460 T220,570 L250,670"/>
+<path d="M20,500 Q50,560 90,620 T150,740"/>
+<path d="M300,300 Q320,360 340,430 T380,560"/>
+<path d="M180,600 Q210,660 240,720 T300,790"/>
+</g>
+<g fill="#C70039">
+<circle cx="130" cy="200" r="2.5" opacity="0.7"/><circle cx="210" cy="350" r="3" opacity="0.6"/>
+<circle cx="200" cy="170" r="2" opacity="0.5"/><circle cx="270" cy="400" r="2.5" opacity="0.7"/>
+<circle cx="140" cy="310" r="2" opacity="0.6"/><circle cx="280" cy="230" r="2.5" opacity="0.5"/>
+<circle cx="110" cy="420" r="2" opacity="0.5"/><circle cx="310" cy="280" r="2" opacity="0.6"/>
+<circle cx="180" cy="460" r="2.5" opacity="0.7"/><circle cx="370" cy="510" r="3" opacity="0.6"/>
+<circle cx="90" cy="620" r="2" opacity="0.5"/><circle cx="240" cy="720" r="2.5" opacity="0.6"/>
+</g>
+</svg>
+
+<!-- HUD -->
+<div class="hud"><i class="tl"></i><i class="tr"></i><i class="bl"></i><i class="br"></i></div>
+<span class="hud-tag top">M1 Probe // Córtex Motor Primário</span>
+<span class="hud-tag bot">Mushin Sports — FTT v2.0</span>
+
+<!-- STATE 1: IDLE -->
+<div class="screen active" id="idle">
+  <div class="brand">MUSHIN <span class="sep">//</span> FTT</div>
+  <div class="neu-wrap">
+    <button class="neu-btn" id="connectBtn" type="button">
+      <div class="inner">
+        <span class="dot"></span>
+        <span class="word">Conectar</span>
+        <span class="sub">M1 Probe</span>
+      </div>
+    </button>
+  </div>
+  <div class="hint">
+    <span>Apoie o celular na superfície</span>
+    <span>Use apenas o indicador dominante</span>
+  </div>
+</div>
+
+<!-- STATE 2: RUN -->
+<div class="screen" id="run">
+  <div class="run-data">
+    <span class="run-label">Tempo</span>
+    <span class="timer" id="timer"><span id="timerVal">10.0</span><span class="u">s</span></span>
+    <div class="divider"></div>
+    <div class="bracket">
+      <span class="counter" id="counterVal">0</span>
+      <span class="counter-lbl">Toques</span>
+    </div>
+  </div>
+</div>
+<div class="state-tag"><span class="blink"></span>Capturando</div>
+
+<!-- STATE 3: RESULT -->
+<div class="screen" id="result">
+  <span class="res-eye">Resultado</span>
+  <div class="res-frame">
+    <span class="res-num" id="resultNum">0</span>
+    <span class="res-lbl">Total Toques</span>
+  </div>
+  <div class="res-meta">
+    <div>Janela<span class="v" id="metaWin">10s</span></div>
+    <div>Taxa<span class="v" id="metaRate">0.0/s</span></div>
+  </div>
+  <button class="reset-btn" id="resetBtn" type="button">Reiniciar</button>
+</div>
+
+<script>
+/* MUSHIN FTT ENGINE v2.0 — ZERO LATENCY + HAPTIC + NEURAL */
+const $=s=>document.querySelector(s);
+const DUR=10;
+let state='idle',startT=0,taps=0,rafId=0,endId=0;
+
+const idle=$('#idle'),run=$('#run'),res=$('#result');
+const timerEl=$('#timerVal'),timerW=$('#timer'),cntEl=$('#counterVal');
+const resNum=$('#resultNum'),metaWin=$('#metaWin'),metaRate=$('#metaRate');
+
+function show(n){
+  [idle,run,res].forEach(e=>e.classList.remove('active'));
+  state=n;
+  if(n==='idle')idle.classList.add('active');
+  else if(n==='run')run.classList.add('active');
+  else if(n==='result')res.classList.add('active');
+}
+
+function go(){
+  taps=0;cntEl.textContent='0';
+  timerEl.textContent=DUR.toFixed(1);
+  timerW.classList.remove('warn');
+  show('run');
+  startT=performance.now();
+  function tick(){
+    const el=(performance.now()-startT)/1000;
+    const rem=Math.max(0,DUR-el);
+    timerEl.textContent=rem.toFixed(1);
+    if(rem<=3)timerW.classList.add('warn');
+    if(rem>0)rafId=requestAnimationFrame(tick);
+  }
+  rafId=requestAnimationFrame(tick);
+  endId=setTimeout(end,DUR*1000);
+}
+
+function end(){
+  cancelAnimationFrame(rafId);clearTimeout(endId);
+  resNum.textContent=String(taps);
+  metaWin.textContent=DUR+'s';
+  metaRate.textContent=(taps/DUR).toFixed(1)+'/s';
+  show('result');
+}
+
+function tap(x,y){
+  if(state!=='run')return;
+  taps++;
+  cntEl.textContent=String(taps);
+  cntEl.classList.remove('flash');void cntEl.offsetWidth;cntEl.classList.add('flash');
+
+  // Ripple GPU-accelerated
+  const r=document.createElement('div');r.className='ripple';
+  r.style.left=x+'px';r.style.top=y+'px';
+  run.appendChild(r);setTimeout(()=>r.remove(),450);
+
+  // Screen Flash (iOS fallback — violento e imediato)
+  const f=document.createElement('div');f.className='screen-flash';
+  document.body.appendChild(f);setTimeout(()=>f.remove(),130);
+
+  // Haptic Android (50ms)
+  if(navigator.vibrate)navigator.vibrate(50);
+}
+
+// CONNECT
+$('#connectBtn').addEventListener('pointerdown',e=>{e.preventDefault();go()},{passive:false});
+
+// TAP CAPTURE — touchstart para latência zero
+run.addEventListener('touchstart',e=>{
+  e.preventDefault();
+  for(const t of e.changedTouches)tap(t.clientX,t.clientY);
+},{passive:false});
+
+// Fallback mouse
+run.addEventListener('pointerdown',e=>{
+  if(e.pointerType==='touch')return;
+  e.preventDefault();tap(e.clientX,e.clientY);
+},{passive:false});
+
+// RESET
+$('#resetBtn').addEventListener('pointerdown',e=>{e.preventDefault();show('idle')},{passive:false});
+
+show('idle');
+</script>
+</body>
+</html>
