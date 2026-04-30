@@ -74,11 +74,11 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);
 .neu-btn{appearance:none;border:0;outline:0;cursor:pointer;
   width:180px;height:180px;border-radius:50%;
   background:linear-gradient(145deg,#111111,#080808);color:var(--ink);font-family:var(--mono);
-  display:grid;place-items:center;position:relative;
+  display:grid;place-items:center;position:relative;z-index:10;
   box-shadow:-10px -10px 24px var(--neu-hi),12px 12px 28px var(--neu-lo),
     inset 0 0 0 1px rgba(255,255,255,0.03);
   transition:box-shadow .1s ease,transform .1s ease;
-  will-change:transform;transform:translateZ(0)}
+  will-change:transform;transform:translateZ(0);touch-action:manipulation}
 .neu-btn:active{
   box-shadow:inset -6px -6px 16px var(--neu-hi),inset 8px 8px 20px var(--neu-lo);
   transform:translateZ(0) scale(0.97)}
@@ -170,7 +170,8 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);
   font-variant-numeric:tabular-nums}
 .reset-btn{appearance:none;border:1px solid var(--ink-faint);background:transparent;
   color:var(--ink-dim);font-family:var(--mono);font-size:9px;letter-spacing:0.4em;text-transform:uppercase;
-  padding:11px 24px;cursor:pointer;margin-top:12px;transition:border-color .15s,color .15s}
+  padding:11px 24px;cursor:pointer;margin-top:12px;transition:border-color .15s,color .15s;
+  z-index:10;touch-action:manipulation}
 .reset-btn:active{border-color:var(--blood);color:var(--blood)}
 </style>
 </head>
@@ -340,8 +341,9 @@ function tap(x,y){
   if(navigator.vibrate)navigator.vibrate(50);
 }
 
-// CONNECT
-$('#connectBtn').addEventListener('pointerdown',e=>{e.preventDefault();startPrep()},{passive:false});
+// CONNECT — click como handler principal (mais confiável cross-browser)
+$('#connectBtn').addEventListener('click',e=>{e.preventDefault();e.stopPropagation();startPrep()});
+$('#connectBtn').addEventListener('touchend',e=>{e.preventDefault();e.stopPropagation();startPrep()},{passive:false});
 
 // TAP CAPTURE — touchstart para latência zero
 run.addEventListener('touchstart',e=>{
@@ -355,8 +357,9 @@ run.addEventListener('pointerdown',e=>{
   e.preventDefault();tap(e.clientX,e.clientY);
 },{passive:false});
 
-// RESET
-$('#resetBtn').addEventListener('pointerdown',e=>{e.preventDefault();show('idle')},{passive:false});
+// RESET — click como handler principal
+$('#resetBtn').addEventListener('click',e=>{e.preventDefault();show('idle')});
+$('#resetBtn').addEventListener('touchend',e=>{e.preventDefault();show('idle')},{passive:false});
 
 show('idle');
 </script>
