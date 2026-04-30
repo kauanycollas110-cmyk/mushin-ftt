@@ -13,8 +13,8 @@
 <style>
 :root{
   --bg:#000;--blood:#C70039;--blood-dark:#8B0000;
-  --blood-glow:rgba(199,0,57,0.55);--blood-dim:rgba(139,0,0,0.25);
-  --gold:#D4AF37;--gold-glow:rgba(212,175,55,0.5);--gold-dim:rgba(212,175,55,0.15);
+  --blood-glow:rgba(199,0,57,0.55);--gold:#D4AF37;
+  --gold-glow:rgba(212,175,55,0.5);--gold-dim:rgba(212,175,55,0.15);
   --ink:#e0e0e0;--ink-dim:#555;--ink-faint:#1e1e1e;
   --neu-hi:rgba(255,255,255,0.07);--neu-lo:rgba(0,0,0,0.9);
   --mono:'JetBrains Mono',monospace;
@@ -24,421 +24,355 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);
   font-family:var(--mono);user-select:none;-webkit-user-select:none;
   touch-action:manipulation;overscroll-behavior:none}
 
-/* ═══ NEURAL BACKGROUND ═══ */
-.neural-bg{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.35}
-.neural-bg path{stroke-dasharray:12 8;animation:synapse 4s linear infinite}
-.n2{animation-delay:-1s!important}.n3{animation-delay:-2s!important}
-.n4{animation-delay:-0.5s!important}.n5{animation-delay:-1.5s!important}
-.n6{animation-delay:-2.5s!important}.n7{animation-delay:-3s!important}
-.n8{animation-delay:-0.7s!important}.n9{animation-delay:-1.8s!important}
-.n10{animation-delay:-3.5s!important}
-@keyframes synapse{to{stroke-dashoffset:-40}}
-.neural-bg circle{animation:nodePulse 3s ease-in-out infinite alternate}
-.np2{animation-delay:-0.5s!important}.np3{animation-delay:-1s!important}
-.np4{animation-delay:-1.5s!important}.np5{animation-delay:-2s!important}
-.np6{animation-delay:-2.5s!important}
-@keyframes nodePulse{0%{opacity:0.2;r:1.5}100%{opacity:0.9;r:3.5}}
+/* Neural BG — NO blur filter (mobile GPU saver) */
+.neural-bg{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.3}
+.neural-bg path{stroke-dasharray:12 8;animation:syn 5s linear infinite}
+.d2{animation-delay:-1.2s!important}.d3{animation-delay:-2.4s!important}
+.d4{animation-delay:-.6s!important}.d5{animation-delay:-1.8s!important}
+.d6{animation-delay:-3s!important}.d7{animation-delay:-3.6s!important}
+@keyframes syn{to{stroke-dashoffset:-40}}
+.neural-bg circle{animation:np 3.5s ease-in-out infinite alternate}
+.c2{animation-delay:-.7s!important}.c3{animation-delay:-1.4s!important}
+.c4{animation-delay:-2.1s!important}.c5{animation-delay:-2.8s!important}
+@keyframes np{0%{opacity:.2;r:1.5}100%{opacity:.85;r:3.2}}
 
-/* ═══ HUD ═══ */
+/* Canvas overlay for ripple+flash (zero DOM thrashing) */
+#fx{position:fixed;inset:0;z-index:4;pointer-events:none}
+
+/* HUD */
 .hud{position:fixed;inset:10px;pointer-events:none;z-index:1}
-.hud i{position:absolute;width:18px;height:18px;border-color:var(--ink-faint);border-style:solid;border-width:0}
+.hud i{position:absolute;width:16px;height:16px;border-color:var(--ink-faint);border-style:solid;border-width:0}
 .hud .tl{top:0;left:0;border-top-width:1px;border-left-width:1px}
 .hud .tr{top:0;right:0;border-top-width:1px;border-right-width:1px}
 .hud .bl{bottom:0;left:0;border-bottom-width:1px;border-left-width:1px}
 .hud .br{bottom:0;right:0;border-bottom-width:1px;border-right-width:1px}
-.hud-tag{position:fixed;font-size:7px;letter-spacing:0.4em;text-transform:uppercase;
-  color:var(--ink-dim);z-index:2;pointer-events:none;font-family:var(--mono);opacity:0.7}
-.hud-tag.top{top:14px;left:50%;transform:translateX(-50%)}
-.hud-tag.bot{bottom:14px;left:50%;transform:translateX(-50%)}
+.htag{position:fixed;font-size:7px;letter-spacing:.4em;text-transform:uppercase;
+  color:var(--ink-dim);z-index:2;pointer-events:none;font-family:var(--mono);opacity:.6}
+.htag.t{top:14px;left:50%;transform:translateX(-50%)}
+.htag.b{bottom:14px;left:50%;transform:translateX(-50%)}
 
-/* ═══ SCREEN SYSTEM (Opacity transitions) ═══ */
-.screen{position:fixed;inset:0;z-index:5;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;
-  opacity:0;visibility:hidden;transition:opacity .35s ease,visibility .35s ease;
-  will-change:opacity;transform:translateZ(0)}
-.screen.active{opacity:1;visibility:visible}
+/* Screens — opacity transitions, contain for perf */
+.screen{position:fixed;inset:0;z-index:5;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;padding:20px;
+  opacity:0;visibility:hidden;pointer-events:none;
+  transition:opacity .3s ease,visibility .3s ease;
+  contain:layout style;transform:translateZ(0)}
+.screen.on{opacity:1;visibility:visible;pointer-events:auto}
 
-/* ═══ PREP ═══ */
-#prep{gap:16px;text-align:center}
-.prep-num{font-size:clamp(140px,35vw,220px);font-weight:700;color:var(--blood);
-  text-shadow:0 0 50px var(--blood-glow),0 0 120px var(--blood-dim);line-height:1;
-  transition:transform .15s ease,opacity .15s ease;transform:scale(1);opacity:1}
-.prep-num.pop{transform:scale(1.15);opacity:0.6}
-.prep-lbl{font-size:12px;letter-spacing:1em;color:var(--ink-dim);text-transform:uppercase}
-
-/* ═══ IDLE ═══ */
+/* IDLE */
 #idle{gap:36px;text-align:center}
 .brand{font-family:'Space Grotesk',sans-serif;font-weight:700;
-  font-size:clamp(22px,6vw,34px);letter-spacing:0.35em;color:var(--gold);
+  font-size:clamp(22px,6vw,34px);letter-spacing:.35em;color:var(--gold);
   text-shadow:0 0 14px var(--gold-glow),0 0 40px var(--gold-dim)}
 .brand .sep{color:var(--blood);text-shadow:0 0 16px var(--blood-glow)}
-.brand .v{font-size:0.4em;color:var(--ink-dim);letter-spacing:0.2em;vertical-align:super;margin-left:6px}
+.brand .ver{font-size:.35em;color:var(--ink-dim);letter-spacing:.15em;vertical-align:super;margin-left:6px}
 
-.neu-wrap{position:relative;display:grid;place-items:center}
-.neu-wrap::before{content:"";position:absolute;width:220px;height:220px;border-radius:50%;
-  border:1px solid var(--ink-faint);opacity:0.25;pointer-events:none}
-.neu-wrap::after{content:"";position:absolute;width:260px;height:260px;border-radius:50%;
-  border:1px dashed var(--ink-faint);opacity:0.12;animation:spin 50s linear infinite;pointer-events:none}
-@keyframes spin{to{transform:rotate(360deg)}}
+.nw{position:relative;display:grid;place-items:center}
+.nw::before{content:"";position:absolute;width:220px;height:220px;border-radius:50%;
+  border:1px solid var(--ink-faint);opacity:.25;pointer-events:none}
+.nw::after{content:"";position:absolute;width:260px;height:260px;border-radius:50%;
+  border:1px dashed var(--ink-faint);opacity:.1;animation:sp 50s linear infinite;pointer-events:none}
+@keyframes sp{to{transform:rotate(360deg)}}
 
-.neu-btn{appearance:none;border:0;outline:0;cursor:pointer;
+.nb{appearance:none;border:0;outline:0;cursor:pointer;
   width:180px;height:180px;border-radius:50%;
   background:linear-gradient(145deg,#0f0f0f,#060606);color:var(--ink);font-family:var(--mono);
   display:grid;place-items:center;position:relative;z-index:10;
-  box-shadow:
-    -12px -12px 30px var(--neu-hi),
-    14px 14px 35px var(--neu-lo),
-    inset 0 0 0 1px rgba(255,255,255,0.04),
-    0 0 60px rgba(199,0,57,0.08);
-  transition:box-shadow .12s ease,transform .12s ease;
-  will-change:transform;transform:translateZ(0);touch-action:manipulation}
-.neu-btn:active{
-  box-shadow:inset -8px -8px 20px var(--neu-hi),inset 10px 10px 25px var(--neu-lo),
-    0 0 40px rgba(199,0,57,0.15);
-  transform:translateZ(0) scale(0.96)}
-.neu-btn .inner{display:flex;flex-direction:column;align-items:center;gap:10px;z-index:2}
-.neu-btn .dot{width:10px;height:10px;border-radius:50%;background:var(--blood);
-  box-shadow:0 0 18px var(--blood-glow),0 0 5px var(--blood);animation:breathe 2.4s ease-in-out infinite}
-@keyframes breathe{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(0.7);opacity:0.5}}
-.neu-btn .word{font-size:13px;letter-spacing:0.35em;text-transform:uppercase;color:var(--gold);
+  box-shadow:-12px -12px 30px var(--neu-hi),14px 14px 35px var(--neu-lo),
+    inset 0 0 0 1px rgba(255,255,255,.04),0 0 50px rgba(199,0,57,.08);
+  transition:box-shadow .1s,transform .1s;touch-action:manipulation;transform:translateZ(0)}
+.nb:active{box-shadow:inset -8px -8px 20px var(--neu-hi),inset 10px 10px 25px var(--neu-lo),
+  0 0 35px rgba(199,0,57,.15);transform:translateZ(0) scale(.96)}
+.nb .in{display:flex;flex-direction:column;align-items:center;gap:10px}
+.nb .dot{width:10px;height:10px;border-radius:50%;background:var(--blood);
+  box-shadow:0 0 16px var(--blood-glow),0 0 4px var(--blood);animation:br 2.4s ease-in-out infinite}
+@keyframes br{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(.7);opacity:.5}}
+.nb .w{font-size:13px;letter-spacing:.35em;text-transform:uppercase;color:var(--gold);
   font-weight:700;text-shadow:0 0 10px var(--gold-glow)}
-.neu-btn .sub{font-size:8px;letter-spacing:0.5em;color:var(--ink-dim);text-transform:uppercase}
-
-.hint{font-size:8px;letter-spacing:0.2em;color:var(--ink-dim);text-transform:uppercase;
-  display:flex;flex-direction:column;gap:5px;align-items:center;opacity:0.7}
+.nb .s{font-size:8px;letter-spacing:.5em;color:var(--ink-dim);text-transform:uppercase}
+.hint{font-size:8px;letter-spacing:.2em;color:var(--ink-dim);text-transform:uppercase;
+  display:flex;flex-direction:column;gap:5px;align-items:center;opacity:.65}
 .hint span{display:flex;align-items:center;gap:8px}
 .hint span::before,.hint span::after{content:"";width:10px;height:1px;background:var(--ink-faint)}
 
-/* ═══ RUN ═══ */
-#run{cursor:pointer;background:var(--bg)}
+/* PREP */
+#prep{gap:16px;text-align:center}
+.pn{font-size:clamp(140px,35vw,220px);font-weight:700;color:var(--blood);
+  text-shadow:0 0 50px var(--blood-glow),0 0 100px rgba(139,0,0,.3);line-height:1;
+  transition:transform .12s,opacity .12s}
+.pn.pop{transform:scale(1.15);opacity:.5}
+.pl{font-size:12px;letter-spacing:1em;color:var(--ink-dim);text-transform:uppercase}
+
+/* RUN */
+#run{cursor:pointer}
 #run::before{content:"";position:absolute;inset:0;pointer-events:none;z-index:2;
-  background:radial-gradient(ellipse at center,transparent 50%,rgba(139,0,0,0.12) 100%)}
-
-.run-data{position:relative;z-index:3;display:flex;flex-direction:column;
-  align-items:center;gap:8px;pointer-events:none}
-.run-label{font-size:8px;letter-spacing:0.6em;color:var(--ink-dim);text-transform:uppercase;
+  background:radial-gradient(ellipse at center,transparent 45%,rgba(139,0,0,.1) 100%)}
+.rd{position:relative;z-index:3;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none}
+.rl{font-size:8px;letter-spacing:.6em;color:var(--ink-dim);text-transform:uppercase;
   display:flex;align-items:center;gap:8px}
-.run-label::before,.run-label::after{content:"";width:14px;height:1px;background:var(--ink-faint)}
+.rl::before,.rl::after{content:"";width:14px;height:1px;background:var(--ink-faint)}
+.tm{font-weight:700;font-size:clamp(52px,13vw,86px);color:var(--gold);
+  font-variant-numeric:tabular-nums;letter-spacing:-.03em;line-height:1;
+  text-shadow:0 0 20px var(--gold-glow),0 0 4px rgba(212,175,55,.25)}
+.tm .u{font-size:.28em;color:rgba(212,175,55,.45);margin-left:2px;font-weight:400}
+.tm.w{color:var(--blood);text-shadow:0 0 24px var(--blood-glow),0 0 6px var(--blood)}
+.dv{width:60px;height:1px;background:linear-gradient(90deg,transparent,var(--blood-dark),transparent);
+  margin:10px 0;opacity:.3}
+.bk{position:relative;padding:8px 24px;display:inline-flex;flex-direction:column;align-items:center;gap:4px}
+.bk::before,.bk::after{content:"";position:absolute;top:0;bottom:0;width:10px;
+  border-color:var(--blood-dark);border-style:solid;opacity:.4}
+.bk::before{left:0;border-width:1px 0 1px 1px}
+.bk::after{right:0;border-width:1px 1px 1px 0}
+.ct{font-weight:700;font-size:clamp(86px,24vw,155px);color:var(--gold);
+  font-variant-numeric:tabular-nums;letter-spacing:-.04em;line-height:.85;
+  text-shadow:0 0 22px var(--gold-glow),0 0 4px rgba(212,175,55,.2)}
+.cl{font-size:8px;letter-spacing:.6em;color:var(--ink-dim);text-transform:uppercase}
+.st{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:8;
+  font-size:8px;letter-spacing:.5em;color:var(--ink-dim);text-transform:uppercase;
+  opacity:0;transition:opacity .25s;pointer-events:none;display:flex;align-items:center;gap:8px}
+.st.on{opacity:1}
+.st .bl{width:5px;height:5px;border-radius:50%;background:var(--blood);
+  box-shadow:0 0 10px var(--blood-glow);animation:bk 1s ease-in-out infinite}
+@keyframes bk{0%,100%{opacity:1}50%{opacity:.15}}
 
-.timer{font-weight:700;font-size:clamp(54px,13vw,88px);color:var(--gold);
-  font-variant-numeric:tabular-nums;letter-spacing:-0.03em;line-height:1;
-  text-shadow:0 0 20px var(--gold-glow),0 0 4px rgba(212,175,55,0.3)}
-.timer .u{font-size:0.28em;color:rgba(212,175,55,0.5);margin-left:2px;font-weight:400}
-.timer.warn{color:var(--blood);text-shadow:0 0 24px var(--blood-glow),0 0 6px var(--blood)}
-
-.divider{width:70px;height:1px;background:linear-gradient(90deg,transparent,var(--blood-dark),transparent);
-  margin:12px 0;opacity:0.35}
-
-.bracket{position:relative;padding:10px 26px;display:inline-flex;flex-direction:column;align-items:center;gap:4px}
-.bracket::before,.bracket::after{content:"";position:absolute;top:0;bottom:0;width:10px;
-  border-color:var(--blood-dark);border-style:solid;opacity:0.4}
-.bracket::before{left:0;border-width:1px 0 1px 1px}
-.bracket::after{right:0;border-width:1px 1px 1px 0}
-
-.counter{font-weight:700;font-size:clamp(88px,25vw,160px);color:var(--gold);
-  font-variant-numeric:tabular-nums;letter-spacing:-0.04em;line-height:0.85;
-  text-shadow:0 0 24px var(--gold-glow),0 0 5px rgba(212,175,55,0.2);
-  will-change:transform;transform:translateZ(0)}
-.counter.bump{animation:bump 60ms ease-out}
-@keyframes bump{0%{transform:translateZ(0) scale(1.08)}100%{transform:translateZ(0) scale(1)}}
-.counter-lbl{font-size:8px;letter-spacing:0.6em;color:var(--ink-dim);text-transform:uppercase}
-
-/* State indicator */
-.state-tag{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:8;
-  font-size:8px;letter-spacing:0.5em;color:var(--ink-dim);text-transform:uppercase;
-  opacity:0;transition:opacity .3s;pointer-events:none;display:flex;align-items:center;gap:8px}
-.state-tag.on{opacity:1}
-.state-tag .blink{width:5px;height:5px;border-radius:50%;background:var(--blood);
-  box-shadow:0 0 10px var(--blood-glow);animation:blink 1s ease-in-out infinite}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:0.15}}
-
-/* ═══ RIPPLE POOL (Zero DOM Thrashing) ═══ */
-.rp{position:absolute;width:90px;height:90px;border-radius:50%;pointer-events:none;z-index:4;
-  background:radial-gradient(circle,var(--blood-glow),transparent 60%);
-  opacity:0;transform:translate(-50%,-50%) scale(0) translateZ(0);
-  will-change:transform,opacity}
-.rp.fire{animation:rip .35s cubic-bezier(0.22,0.61,0.36,1) forwards}
-@keyframes rip{
-  0%{transform:translate(-50%,-50%) scale(0) translateZ(0);opacity:0.95}
-  50%{opacity:0.4}
-  100%{transform:translate(-50%,-50%) scale(2.8) translateZ(0);opacity:0}}
-
-/* Screen flash overlay (single reusable element) */
-.flash-overlay{position:fixed;inset:0;pointer-events:none;z-index:12;
-  background:rgba(199,0,57,0.14);opacity:0;
-  will-change:opacity;transform:translateZ(0);transition:none}
-.flash-overlay.fire{animation:sflash 100ms ease-out forwards}
-@keyframes sflash{0%{opacity:1}100%{opacity:0}}
-
-/* ═══ RESULT ═══ */
-#result{gap:22px;text-align:center}
-.res-eye{font-size:8px;letter-spacing:0.6em;color:var(--ink-dim);text-transform:uppercase;
+/* RESULT */
+#result{gap:20px;text-align:center}
+.re{font-size:8px;letter-spacing:.6em;color:var(--ink-dim);text-transform:uppercase;
   display:flex;align-items:center;gap:10px}
-.res-eye::before,.res-eye::after{content:"";width:18px;height:1px;background:var(--ink-faint)}
-.res-frame{position:relative;padding:20px 32px;display:inline-flex;flex-direction:column;align-items:center;gap:6px}
-.res-frame::before,.res-frame::after{content:"";position:absolute;top:0;bottom:0;width:10px;
-  border-color:var(--blood-dark);border-style:solid;opacity:0.45}
-.res-frame::before{left:0;border-width:1px 0 1px 1px}
-.res-frame::after{right:0;border-width:1px 1px 1px 0}
-.res-num{font-weight:700;font-size:clamp(88px,24vw,160px);color:var(--gold);
-  font-variant-numeric:tabular-nums;letter-spacing:-0.04em;line-height:0.9;
-  text-shadow:0 0 28px var(--gold-glow),0 0 6px rgba(212,175,55,0.3)}
-.res-lbl{font-size:9px;letter-spacing:0.5em;color:rgba(212,175,55,0.55);text-transform:uppercase}
-.res-meta{display:flex;gap:24px;font-size:8px;letter-spacing:0.3em;color:var(--ink-dim);
+.re::before,.re::after{content:"";width:16px;height:1px;background:var(--ink-faint)}
+.rf{position:relative;padding:18px 30px;display:inline-flex;flex-direction:column;align-items:center;gap:6px}
+.rf::before,.rf::after{content:"";position:absolute;top:0;bottom:0;width:10px;
+  border-color:var(--blood-dark);border-style:solid;opacity:.4}
+.rf::before{left:0;border-width:1px 0 1px 1px}
+.rf::after{right:0;border-width:1px 1px 1px 0}
+.rn{font-weight:700;font-size:clamp(86px,24vw,155px);color:var(--gold);
+  font-variant-numeric:tabular-nums;letter-spacing:-.04em;line-height:.9;
+  text-shadow:0 0 26px var(--gold-glow),0 0 5px rgba(212,175,55,.25)}
+.rlb{font-size:9px;letter-spacing:.5em;color:rgba(212,175,55,.5);text-transform:uppercase}
+.rm{display:flex;gap:24px;font-size:8px;letter-spacing:.3em;color:var(--ink-dim);
   text-transform:uppercase;margin-top:4px}
-.res-meta .v{display:block;color:var(--ink);font-size:14px;letter-spacing:0.05em;margin-top:3px;
+.rm .v{display:block;color:var(--ink);font-size:14px;letter-spacing:.05em;margin-top:3px;
   font-variant-numeric:tabular-nums}
-.reset-btn{appearance:none;border:1px solid var(--ink-faint);background:transparent;
-  color:var(--ink-dim);font-family:var(--mono);font-size:8px;letter-spacing:0.5em;text-transform:uppercase;
-  padding:12px 26px;cursor:pointer;margin-top:10px;
-  transition:border-color .2s,color .2s,box-shadow .2s;
+.rb{appearance:none;border:1px solid var(--ink-faint);background:transparent;
+  color:var(--ink-dim);font-family:var(--mono);font-size:8px;letter-spacing:.5em;text-transform:uppercase;
+  padding:12px 26px;cursor:pointer;margin-top:8px;transition:border-color .15s,color .15s;
   z-index:10;touch-action:manipulation}
-.reset-btn:active{border-color:var(--blood);color:var(--blood);
-  box-shadow:0 0 20px rgba(199,0,57,0.15)}
+.rb:active{border-color:var(--blood);color:var(--blood)}
 </style>
 </head>
 <body>
 
-<!-- NEURAL MESH SVG (Alive) -->
+<!-- NEURAL MESH (no blur filter = mobile safe) -->
 <svg class="neural-bg" viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice">
-<defs><filter id="g"><feGaussianBlur stdDeviation="1.2"/></filter></defs>
-<g stroke="#8B0000" stroke-width="0.6" fill="none" filter="url(#g)">
-<path d="M60,50 Q90,130 130,200 T210,350 L250,460" stroke-width="0.9"/>
-<path class="n2" d="M160,30 Q180,100 200,170 T240,290 L270,400 Q290,480 320,560"/>
-<path class="n3" d="M90,180 Q110,240 140,310 T190,430 L220,530"/>
-<path class="n4" d="M220,80 Q250,150 280,230 T330,370 L360,480"/>
-<path class="n5" d="M40,280 Q70,350 110,420 T170,550 L200,660"/>
-<path class="n6" d="M270,140 Q290,210 310,280 T340,400 L370,510 Q385,590 395,670"/>
-<path class="n7" d="M130,330 Q150,400 180,460 T220,570 L250,670"/>
-<path class="n8" d="M20,500 Q50,560 90,620 T150,740"/>
-<path class="n9" d="M300,300 Q320,360 340,430 T380,560"/>
-<path class="n10" d="M180,600 Q210,660 240,720 T300,790"/>
+<g stroke="#8B0000" stroke-width=".7" fill="none" opacity=".8">
+<path d="M60,50Q90,130 130,200T210,350L250,460" stroke-width=".9"/>
+<path class="d2" d="M160,30Q180,100 200,170T240,290L270,400Q290,480 320,560"/>
+<path class="d3" d="M90,180Q110,240 140,310T190,430L220,530"/>
+<path class="d4" d="M220,80Q250,150 280,230T330,370L360,480"/>
+<path class="d5" d="M40,280Q70,350 110,420T170,550L200,660"/>
+<path class="d6" d="M270,140Q290,210 310,280T340,400L370,510Q385,590 395,670"/>
+<path class="d7" d="M130,330Q150,400 180,460T220,570L250,670"/>
+<path d="M20,500Q50,560 90,620T150,740"/>
+<path class="d3" d="M300,300Q320,360 340,430T380,560"/>
+<path class="d5" d="M180,600Q210,660 240,720T300,790"/>
 </g>
 <g fill="#C70039">
-<circle cx="130" cy="200" r="2.5"/>
-<circle class="np2" cx="210" cy="350" r="3"/>
-<circle class="np3" cx="200" cy="170" r="2"/>
-<circle class="np4" cx="270" cy="400" r="2.5"/>
-<circle class="np5" cx="140" cy="310" r="2"/>
-<circle class="np6" cx="280" cy="230" r="2.5"/>
-<circle cx="110" cy="420" r="2"/>
-<circle class="np2" cx="310" cy="280" r="2"/>
-<circle class="np4" cx="180" cy="460" r="2.5"/>
-<circle class="np5" cx="370" cy="510" r="3"/>
-<circle class="np3" cx="90" cy="620" r="2"/>
-<circle class="np6" cx="240" cy="720" r="2.5"/>
+<circle cx="130" cy="200" r="2.5"/><circle class="c2" cx="210" cy="350" r="3"/>
+<circle class="c3" cx="200" cy="170" r="2"/><circle class="c4" cx="270" cy="400" r="2.5"/>
+<circle class="c5" cx="140" cy="310" r="2"/><circle cx="280" cy="230" r="2.5"/>
+<circle class="c2" cx="110" cy="420" r="2"/><circle class="c3" cx="310" cy="280" r="2"/>
+<circle class="c4" cx="180" cy="460" r="2.5"/><circle class="c5" cx="370" cy="510" r="3"/>
+<circle cx="90" cy="620" r="2"/><circle class="c2" cx="240" cy="720" r="2.5"/>
 </g>
 </svg>
 
 <!-- HUD -->
 <div class="hud"><i class="tl"></i><i class="tr"></i><i class="bl"></i><i class="br"></i></div>
-<span class="hud-tag top">M1 Probe // Córtex Motor Primário</span>
-<span class="hud-tag bot">Mushin Sports — FTT v3.0</span>
+<span class="htag t">M1 Probe // Córtex Motor Primário</span>
+<span class="htag b">Mushin Sports — FTT v4.0</span>
 
-<!-- FLASH OVERLAY (Reusable, zero DOM creation) -->
-<div class="flash-overlay" id="flash"></div>
+<!-- CANVAS: All visual feedback rendered here (zero DOM ops) -->
+<canvas id="fx"></canvas>
 
-<!-- RIPPLE POOL (10 pre-created, zero GC) -->
-<div id="ripplePool" style="position:fixed;inset:0;z-index:4;pointer-events:none;overflow:hidden">
-<div class="rp"></div><div class="rp"></div><div class="rp"></div><div class="rp"></div><div class="rp"></div>
-<div class="rp"></div><div class="rp"></div><div class="rp"></div><div class="rp"></div><div class="rp"></div>
-</div>
-
-<!-- STATE: IDLE -->
-<div class="screen active" id="idle">
-  <div class="brand">MUSHIN <span class="sep">//</span> FTT<span class="v">v3</span></div>
-  <div class="neu-wrap">
-    <button class="neu-btn" id="connectBtn" type="button">
-      <div class="inner">
-        <span class="dot"></span>
-        <span class="word">Conectar</span>
-        <span class="sub">M1 Probe</span>
-      </div>
+<!-- IDLE -->
+<div class="screen on" id="idle">
+  <div class="brand">MUSHIN <span class="sep">//</span> FTT<span class="ver">v4</span></div>
+  <div class="nw">
+    <button class="nb" id="goBtn" type="button">
+      <div class="in"><span class="dot"></span><span class="w">Conectar</span><span class="s">M1 Probe</span></div>
     </button>
   </div>
-  <div class="hint">
-    <span>Apoie o celular na superfície</span>
-    <span>Use apenas o indicador dominante</span>
-  </div>
+  <div class="hint"><span>Apoie na superfície</span><span>Use o indicador dominante</span></div>
 </div>
 
-<!-- STATE: PREP -->
+<!-- PREP -->
 <div class="screen" id="prep">
-  <span class="prep-num" id="prepVal">3</span>
-  <span class="prep-lbl">Preparar</span>
+  <span class="pn" id="pv">3</span>
+  <span class="pl">Preparar</span>
 </div>
 
-<!-- STATE: RUN -->
+<!-- RUN -->
 <div class="screen" id="run">
-  <div class="run-data">
-    <span class="run-label">Captura</span>
-    <span class="timer" id="timer"><span id="timerVal">10.0</span><span class="u">s</span></span>
-    <div class="divider"></div>
-    <div class="bracket">
-      <span class="counter" id="counterVal">0</span>
-      <span class="counter-lbl">Impulsos</span>
-    </div>
+  <div class="rd">
+    <span class="rl">Captura</span>
+    <span class="tm" id="tmr"><span id="tv">10.0</span><span class="u">s</span></span>
+    <div class="dv"></div>
+    <div class="bk"><span class="ct" id="cv">0</span><span class="cl">Impulsos</span></div>
   </div>
 </div>
-<div class="state-tag" id="stateTag"><span class="blink"></span>Capturando</div>
+<div class="st" id="stag"><span class="bl"></span>Capturando</div>
 
-<!-- STATE: RESULT -->
+<!-- RESULT -->
 <div class="screen" id="result">
-  <span class="res-eye">Análise Concluída</span>
-  <div class="res-frame">
-    <span class="res-num" id="resultNum">0</span>
-    <span class="res-lbl">Total Impulsos</span>
+  <span class="re">Análise Concluída</span>
+  <div class="rf"><span class="rn" id="rnum">0</span><span class="rlb">Total Impulsos</span></div>
+  <div class="rm">
+    <div>Janela<span class="v" id="mw">10s</span></div>
+    <div>Taxa<span class="v" id="mr">0.0/s</span></div>
   </div>
-  <div class="res-meta">
-    <div>Janela<span class="v" id="metaWin">10s</span></div>
-    <div>Taxa<span class="v" id="metaRate">0.0/s</span></div>
-  </div>
-  <button class="reset-btn" id="resetBtn" type="button">Nova Captura</button>
+  <button class="rb" id="rstBtn" type="button">Nova Captura</button>
 </div>
 
 <script>
-/* ═══════════════════════════════════════════════════
-   MUSHIN FTT ENGINE v3.0 — WORLD-CLASS ZERO LATENCY
-   Nexus Engineering — Performance-First Architecture
-   ═══════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════
+   MUSHIN FTT v4.0 — CANVAS RENDER PIPELINE
+   Zero DOM ops in hot path. GPU-composited.
+   ═══════════════════════════════════════════ */
+const $=s=>document.querySelector(s),DUR=10;
+let state='idle',taps=0,startT=0,rafId=0,endId=0,warned=false;
 
-const $=s=>document.querySelector(s);
-const DUR=10;
-let state='idle',startT=0,taps=0,rafId=0,endId=0;
+// DOM cache (touched ONCE at init, never queried again)
+const S={idle:$('#idle'),prep:$('#prep'),run:$('#run'),result:$('#result')};
+const tv=$('#tv'),tmr=$('#tmr'),cv=$('#cv');
+const rnum=$('#rnum'),mw=$('#mw'),mr=$('#mr');
+const pv=$('#pv'),stag=$('#stag');
 
-// Cache every DOM reference once (zero lookups during hot path)
-const screens={idle:$('#idle'),prep:$('#prep'),run:$('#run'),result:$('#result')};
-const timerEl=$('#timerVal'),timerW=$('#timer'),cntEl=$('#counterVal');
-const resNum=$('#resultNum'),metaWin=$('#metaWin'),metaRate=$('#metaRate');
-const prepEl=$('#prepVal'),stateTag=$('#stateTag'),flashEl=$('#flash');
+// ═══ CANVAS FX ENGINE ═══
+const can=$('#fx'),ctx=can.getContext('2d');
+let W,H,dpr;
+const FX=[];// active effects pool
 
-// ═══ RIPPLE OBJECT POOL ═══
-const ripples=[...document.querySelectorAll('.rp')];
-let rippleIdx=0;
+function sizeCanvas(){
+  dpr=window.devicePixelRatio||1;
+  W=window.innerWidth;H=window.innerHeight;
+  can.width=W*dpr;can.height=H*dpr;
+  can.style.width=W+'px';can.style.height=H+'px';
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+sizeCanvas();
+window.addEventListener('resize',sizeCanvas);
 
-function fireRipple(x,y){
-  const r=ripples[rippleIdx];
-  rippleIdx=(rippleIdx+1)%ripples.length;
-  r.classList.remove('fire');
-  r.style.left=x+'px';r.style.top=y+'px';
-  void r.offsetWidth; // force reflow — single element, negligible cost
-  r.classList.add('fire');
+function addRipple(x,y){FX.push({t:'r',x,y,p:0})}
+function addFlash(){FX.push({t:'f',p:0})}
+
+// Single rAF loop for ALL visual effects
+let fxRunning=false;
+function fxLoop(){
+  if(!FX.length){fxRunning=false;return}
+  fxRunning=true;
+  ctx.clearRect(0,0,W,H);
+  for(let i=FX.length-1;i>=0;i--){
+    const e=FX[i];e.p+=.045;
+    if(e.p>=1){FX.splice(i,1);continue}
+    if(e.t==='r'){
+      const r=90*(e.p*2.5+.1);
+      const a=1-e.p;
+      ctx.beginPath();
+      ctx.arc(e.x,e.y,r,0,6.283);
+      const g=ctx.createRadialGradient(e.x,e.y,0,e.x,e.y,r);
+      g.addColorStop(0,'rgba(199,0,57,'+(a*.7)+')');
+      g.addColorStop(1,'rgba(199,0,57,0)');
+      ctx.fillStyle=g;ctx.fill();
+    }else{
+      ctx.fillStyle='rgba(199,0,57,'+((.14)*(1-e.p))+')';
+      ctx.fillRect(0,0,W,H);
+    }
+  }
+  requestAnimationFrame(fxLoop);
+}
+function kickFx(){if(!fxRunning){fxRunning=true;requestAnimationFrame(fxLoop)}}
+
+// ═══ SCREEN MANAGEMENT ═══
+function show(n){
+  state=n;
+  Object.values(S).forEach(s=>s.classList.remove('on'));
+  S[n].classList.add('on');
+  stag.classList.toggle('on',n==='run');
 }
 
-function fireFlash(){
-  flashEl.classList.remove('fire');
-  void flashEl.offsetWidth;
-  flashEl.classList.add('fire');
-}
-
-// ═══ SCREEN TRANSITIONS ═══
-function show(name){
-  const prev=state;state=name;
-  Object.values(screens).forEach(s=>s.classList.remove('active'));
-  screens[name].classList.add('active');
-  stateTag.classList.toggle('on',name==='run');
-}
-
-// ═══ PREP COUNTDOWN ═══
-let prepLock=false;
-function startPrep(){
-  if(prepLock)return;
-  prepLock=true;
-  let c=3;
-  prepEl.textContent=c;
+// ═══ PREP ═══
+let lock=false;
+function prep(){
+  if(lock)return;lock=true;
+  let c=3;pv.textContent=c;
   if(navigator.vibrate)navigator.vibrate(50);
   show('prep');
-
-  // Pop animation per tick
-  function popNum(){prepEl.classList.add('pop');setTimeout(()=>prepEl.classList.remove('pop'),150)}
-
   const iv=setInterval(()=>{
     c--;
     if(c>0){
-      popNum();
-      setTimeout(()=>{prepEl.textContent=c},80);
+      pv.classList.add('pop');
+      setTimeout(()=>{pv.textContent=c;pv.classList.remove('pop')},80);
       if(navigator.vibrate)navigator.vibrate(50);
     }else{
       clearInterval(iv);
       if(navigator.vibrate)navigator.vibrate([80,40,80]);
-      prepLock=false;
-      go();
+      lock=false;go();
     }
   },1000);
 }
 
-// ═══ TEST ENGINE (requestAnimationFrame + performance.now) ═══
+// ═══ TEST ENGINE ═══
 function go(){
-  taps=0;
-  cntEl.textContent='0';
-  timerEl.textContent=DUR.toFixed(1);
-  timerW.classList.remove('warn');
+  taps=0;warned=false;
+  cv.textContent='0';tv.textContent=DUR.toFixed(1);
+  tmr.classList.remove('w');
   show('run');
   startT=performance.now();
-
   function tick(now){
-    const elapsed=(now-startT)*0.001; // multiply faster than divide
-    const rem=DUR-elapsed;
-    if(rem<=0){
-      timerEl.textContent='0.0';
-      end();return;
-    }
-    timerEl.textContent=rem.toFixed(1);
-    if(rem<=3&&!timerW.classList.contains('warn'))timerW.classList.add('warn');
+    const rem=DUR-(now-startT)*.001;
+    if(rem<=0){tv.textContent='0.0';fin();return}
+    tv.textContent=rem<10?rem.toFixed(1):DUR.toFixed(1);
+    if(!warned&&rem<=3){warned=true;tmr.classList.add('w')}
     rafId=requestAnimationFrame(tick);
   }
   rafId=requestAnimationFrame(tick);
-  // Safety net: setTimeout as hard stop (rAF can drift on background tabs)
-  endId=setTimeout(end,DUR*1000+50);
+  endId=setTimeout(fin,DUR*1000+30);
 }
 
-function end(){
+function fin(){
+  if(state==='done')return;// guard double-fire
   cancelAnimationFrame(rafId);clearTimeout(endId);
-  state='done'; // block any in-flight taps
-  resNum.textContent=String(taps);
-  metaWin.textContent=DUR+'s';
-  metaRate.textContent=(taps/DUR).toFixed(1)+'/s';
-  // Small delay for dramatic reveal
-  setTimeout(()=>show('result'),200);
+  state='done';
+  rnum.textContent=taps;
+  mw.textContent=DUR+'s';
+  mr.textContent=(taps/DUR).toFixed(1)+'/s';
+  setTimeout(()=>show('result'),180);
 }
 
-// ═══ TAP HANDLER (Fastest possible path) ═══
+// ═══ TAP — ABSOLUTE MINIMUM WORK ═══
 function tap(x,y){
   if(state!=='run')return;
   taps++;
-  // Direct textContent write (fastest DOM update)
-  cntEl.textContent=taps;
-  // Visual bump
-  cntEl.classList.remove('bump');void cntEl.offsetWidth;cntEl.classList.add('bump');
-  // Pooled ripple + single flash element
-  fireRipple(x,y);
-  fireFlash();
-  // Haptic 50ms
+  cv.textContent=taps;// single DOM write, no reflow
+  addRipple(x,y);addFlash();kickFx();
   if(navigator.vibrate)navigator.vibrate(50);
 }
 
-// ═══ EVENT BINDING ═══
+// ═══ EVENTS ═══
+$('#goBtn').addEventListener('click',e=>{e.preventDefault();prep()});
 
-// Connect button — click (universal, zero-delay with viewport meta)
-$('#connectBtn').addEventListener('click',e=>{e.preventDefault();startPrep()});
-
-// Tap zone — touchstart for absolute minimum latency
-screens.run.addEventListener('touchstart',e=>{
+S.run.addEventListener('touchstart',e=>{
   e.preventDefault();
   const t=e.changedTouches;
   for(let i=0;i<t.length;i++)tap(t[i].clientX,t[i].clientY);
 },{passive:false});
 
-// Mouse fallback (desktop testing)
-screens.run.addEventListener('mousedown',e=>{
+S.run.addEventListener('mousedown',e=>{
   if('ontouchstart' in window)return;
   tap(e.clientX,e.clientY);
 });
 
-// Reset
-$('#resetBtn').addEventListener('click',e=>{e.preventDefault();show('idle')});
-
-// Init
+$('#rstBtn').addEventListener('click',e=>{e.preventDefault();show('idle')});
 show('idle');
 </script>
 </body>
