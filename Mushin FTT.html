@@ -5,59 +5,44 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#000000">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>MUSHIN // FTT</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#000;--blood:#C70039;--blood-dark:#8B0000;
-  --blood-glow:rgba(199,0,57,0.55);--gold:#D4AF37;
-  --gold-glow:rgba(212,175,55,0.5);--gold-dim:rgba(212,175,55,0.15);
+  --blood-glow:rgba(199,0,57,.55);--gold:#D4AF37;
+  --gold-glow:rgba(212,175,55,.5);--gold-dim:rgba(212,175,55,.15);
   --ink:#e0e0e0;--ink-dim:#555;--ink-faint:#1e1e1e;
-  --neu-hi:rgba(255,255,255,0.07);--neu-lo:rgba(0,0,0,0.9);
-  --mono:'JetBrains Mono',monospace;
+  --neu-hi:rgba(255,255,255,.07);--neu-lo:rgba(0,0,0,.9);
+  --f:'JetBrains Mono',monospace;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);
-  font-family:var(--mono);user-select:none;-webkit-user-select:none;
+  font-family:var(--f);user-select:none;-webkit-user-select:none;
   touch-action:manipulation;overscroll-behavior:none}
 
-/* Neural BG — NO blur filter (mobile GPU saver) */
-.neural-bg{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.3}
-.neural-bg path{stroke-dasharray:12 8;animation:syn 5s linear infinite}
-.d2{animation-delay:-1.2s!important}.d3{animation-delay:-2.4s!important}
-.d4{animation-delay:-.6s!important}.d5{animation-delay:-1.8s!important}
-.d6{animation-delay:-3s!important}.d7{animation-delay:-3.6s!important}
-@keyframes syn{to{stroke-dashoffset:-40}}
-.neural-bg circle{animation:np 3.5s ease-in-out infinite alternate}
-.c2{animation-delay:-.7s!important}.c3{animation-delay:-1.4s!important}
-.c4{animation-delay:-2.1s!important}.c5{animation-delay:-2.8s!important}
-@keyframes np{0%{opacity:.2;r:1.5}100%{opacity:.85;r:3.2}}
+/* Neural BG — static, zero animation cost */
+.nbg{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.2}
 
-/* Canvas overlay for ripple+flash (zero DOM thrashing) */
+/* Canvas for tap FX */
 #fx{position:fixed;inset:0;z-index:4;pointer-events:none}
 
 /* HUD */
 .hud{position:fixed;inset:10px;pointer-events:none;z-index:1}
 .hud i{position:absolute;width:16px;height:16px;border-color:var(--ink-faint);border-style:solid;border-width:0}
-.hud .tl{top:0;left:0;border-top-width:1px;border-left-width:1px}
-.hud .tr{top:0;right:0;border-top-width:1px;border-right-width:1px}
-.hud .bl{bottom:0;left:0;border-bottom-width:1px;border-left-width:1px}
-.hud .br{bottom:0;right:0;border-bottom-width:1px;border-right-width:1px}
-.htag{position:fixed;font-size:7px;letter-spacing:.4em;text-transform:uppercase;
-  color:var(--ink-dim);z-index:2;pointer-events:none;font-family:var(--mono);opacity:.6}
-.htag.t{top:14px;left:50%;transform:translateX(-50%)}
-.htag.b{bottom:14px;left:50%;transform:translateX(-50%)}
+.hud .a{top:0;left:0;border-top-width:1px;border-left-width:1px}
+.hud .b{top:0;right:0;border-top-width:1px;border-right-width:1px}
+.hud .c{bottom:0;left:0;border-bottom-width:1px;border-left-width:1px}
+.hud .d{bottom:0;right:0;border-bottom-width:1px;border-right-width:1px}
+.ht{position:fixed;font-size:7px;letter-spacing:.4em;text-transform:uppercase;
+  color:var(--ink-dim);z-index:2;pointer-events:none;font-family:var(--f);opacity:.5}
+.ht.t{top:14px;left:50%;transform:translateX(-50%)}
+.ht.b{bottom:14px;left:50%;transform:translateX(-50%)}
 
-/* Screens — opacity transitions, contain for perf */
-.screen{position:fixed;inset:0;z-index:5;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;padding:20px;
-  opacity:0;visibility:hidden;pointer-events:none;
-  transition:opacity .3s ease,visibility .3s ease;
-  contain:layout style;transform:translateZ(0)}
-.screen.on{opacity:1;visibility:visible;pointer-events:auto}
+/* Screens — instant switch, no transitions */
+.scr{position:fixed;inset:0;z-index:5;display:none;flex-direction:column;
+  align-items:center;justify-content:center;padding:20px;transform:translateZ(0)}
+.scr.on{display:flex}
 
 /* IDLE */
 #idle{gap:36px;text-align:center}
@@ -65,18 +50,17 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);
   font-size:clamp(22px,6vw,34px);letter-spacing:.35em;color:var(--gold);
   text-shadow:0 0 14px var(--gold-glow),0 0 40px var(--gold-dim)}
 .brand .sep{color:var(--blood);text-shadow:0 0 16px var(--blood-glow)}
-.brand .ver{font-size:.35em;color:var(--ink-dim);letter-spacing:.15em;vertical-align:super;margin-left:6px}
 
 .nw{position:relative;display:grid;place-items:center}
 .nw::before{content:"";position:absolute;width:220px;height:220px;border-radius:50%;
-  border:1px solid var(--ink-faint);opacity:.25;pointer-events:none}
+  border:1px solid var(--ink-faint);opacity:.2;pointer-events:none}
 .nw::after{content:"";position:absolute;width:260px;height:260px;border-radius:50%;
-  border:1px dashed var(--ink-faint);opacity:.1;animation:sp 50s linear infinite;pointer-events:none}
+  border:1px dashed var(--ink-faint);opacity:.08;pointer-events:none;animation:sp 50s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
 
 .nb{appearance:none;border:0;outline:0;cursor:pointer;
   width:180px;height:180px;border-radius:50%;
-  background:linear-gradient(145deg,#0f0f0f,#060606);color:var(--ink);font-family:var(--mono);
+  background:linear-gradient(145deg,#0f0f0f,#060606);color:var(--ink);font-family:var(--f);
   display:grid;place-items:center;position:relative;z-index:10;
   box-shadow:-12px -12px 30px var(--neu-hi),14px 14px 35px var(--neu-lo),
     inset 0 0 0 1px rgba(255,255,255,.04),0 0 50px rgba(199,0,57,.08);
@@ -85,118 +69,105 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);
   0 0 35px rgba(199,0,57,.15);transform:translateZ(0) scale(.96)}
 .nb .in{display:flex;flex-direction:column;align-items:center;gap:10px}
 .nb .dot{width:10px;height:10px;border-radius:50%;background:var(--blood);
-  box-shadow:0 0 16px var(--blood-glow),0 0 4px var(--blood);animation:br 2.4s ease-in-out infinite}
+  box-shadow:0 0 16px var(--blood-glow);animation:br 2.4s ease-in-out infinite}
 @keyframes br{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(.7);opacity:.5}}
 .nb .w{font-size:13px;letter-spacing:.35em;text-transform:uppercase;color:var(--gold);
   font-weight:700;text-shadow:0 0 10px var(--gold-glow)}
 .nb .s{font-size:8px;letter-spacing:.5em;color:var(--ink-dim);text-transform:uppercase}
 .hint{font-size:8px;letter-spacing:.2em;color:var(--ink-dim);text-transform:uppercase;
-  display:flex;flex-direction:column;gap:5px;align-items:center;opacity:.65}
-.hint span{display:flex;align-items:center;gap:8px}
-.hint span::before,.hint span::after{content:"";width:10px;height:1px;background:var(--ink-faint)}
+  display:flex;flex-direction:column;gap:5px;align-items:center;opacity:.6}
 
 /* PREP */
 #prep{gap:16px;text-align:center}
 .pn{font-size:clamp(140px,35vw,220px);font-weight:700;color:var(--blood);
-  text-shadow:0 0 50px var(--blood-glow),0 0 100px rgba(139,0,0,.3);line-height:1;
-  transition:transform .12s,opacity .12s}
-.pn.pop{transform:scale(1.15);opacity:.5}
+  text-shadow:0 0 50px var(--blood-glow);line-height:1}
 .pl{font-size:12px;letter-spacing:1em;color:var(--ink-dim);text-transform:uppercase}
 
 /* RUN */
 #run{cursor:pointer}
 #run::before{content:"";position:absolute;inset:0;pointer-events:none;z-index:2;
-  background:radial-gradient(ellipse at center,transparent 45%,rgba(139,0,0,.1) 100%)}
+  background:radial-gradient(ellipse at center,transparent 45%,rgba(139,0,0,.08) 100%)}
 .rd{position:relative;z-index:3;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none}
-.rl{font-size:8px;letter-spacing:.6em;color:var(--ink-dim);text-transform:uppercase;
-  display:flex;align-items:center;gap:8px}
-.rl::before,.rl::after{content:"";width:14px;height:1px;background:var(--ink-faint)}
+.rl{font-size:8px;letter-spacing:.6em;color:var(--ink-dim);text-transform:uppercase}
 .tm{font-weight:700;font-size:clamp(52px,13vw,86px);color:var(--gold);
   font-variant-numeric:tabular-nums;letter-spacing:-.03em;line-height:1;
-  text-shadow:0 0 20px var(--gold-glow),0 0 4px rgba(212,175,55,.25)}
-.tm .u{font-size:.28em;color:rgba(212,175,55,.45);margin-left:2px;font-weight:400}
-.tm.w{color:var(--blood);text-shadow:0 0 24px var(--blood-glow),0 0 6px var(--blood)}
-.dv{width:60px;height:1px;background:linear-gradient(90deg,transparent,var(--blood-dark),transparent);
-  margin:10px 0;opacity:.3}
+  text-shadow:0 0 20px var(--gold-glow)}
+.tm .u{font-size:.28em;color:rgba(212,175,55,.4);margin-left:2px;font-weight:400}
+.tm.w{color:var(--blood);text-shadow:0 0 24px var(--blood-glow)}
+.dv{width:60px;height:1px;background:linear-gradient(90deg,transparent,var(--blood-dark),transparent);margin:10px 0;opacity:.3}
 .bk{position:relative;padding:8px 24px;display:inline-flex;flex-direction:column;align-items:center;gap:4px}
-.bk::before,.bk::after{content:"";position:absolute;top:0;bottom:0;width:10px;
-  border-color:var(--blood-dark);border-style:solid;opacity:.4}
+.bk::before,.bk::after{content:"";position:absolute;top:0;bottom:0;width:10px;border-color:var(--blood-dark);border-style:solid;opacity:.35}
 .bk::before{left:0;border-width:1px 0 1px 1px}
 .bk::after{right:0;border-width:1px 1px 1px 0}
 .ct{font-weight:700;font-size:clamp(86px,24vw,155px);color:var(--gold);
   font-variant-numeric:tabular-nums;letter-spacing:-.04em;line-height:.85;
-  text-shadow:0 0 22px var(--gold-glow),0 0 4px rgba(212,175,55,.2)}
+  text-shadow:0 0 22px var(--gold-glow)}
 .cl{font-size:8px;letter-spacing:.6em;color:var(--ink-dim);text-transform:uppercase}
-.st{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:8;
+.stag{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:8;
   font-size:8px;letter-spacing:.5em;color:var(--ink-dim);text-transform:uppercase;
-  opacity:0;transition:opacity .25s;pointer-events:none;display:flex;align-items:center;gap:8px}
-.st.on{opacity:1}
-.st .bl{width:5px;height:5px;border-radius:50%;background:var(--blood);
+  display:none;pointer-events:none;align-items:center;gap:8px}
+.stag.on{display:flex}
+.stag .bl{width:5px;height:5px;border-radius:50%;background:var(--blood);
   box-shadow:0 0 10px var(--blood-glow);animation:bk 1s ease-in-out infinite}
 @keyframes bk{0%,100%{opacity:1}50%{opacity:.15}}
 
 /* RESULT */
 #result{gap:20px;text-align:center}
-.re{font-size:8px;letter-spacing:.6em;color:var(--ink-dim);text-transform:uppercase;
-  display:flex;align-items:center;gap:10px}
-.re::before,.re::after{content:"";width:16px;height:1px;background:var(--ink-faint)}
+.re{font-size:8px;letter-spacing:.6em;color:var(--ink-dim);text-transform:uppercase}
 .rf{position:relative;padding:18px 30px;display:inline-flex;flex-direction:column;align-items:center;gap:6px}
-.rf::before,.rf::after{content:"";position:absolute;top:0;bottom:0;width:10px;
-  border-color:var(--blood-dark);border-style:solid;opacity:.4}
+.rf::before,.rf::after{content:"";position:absolute;top:0;bottom:0;width:10px;border-color:var(--blood-dark);border-style:solid;opacity:.4}
 .rf::before{left:0;border-width:1px 0 1px 1px}
 .rf::after{right:0;border-width:1px 1px 1px 0}
 .rn{font-weight:700;font-size:clamp(86px,24vw,155px);color:var(--gold);
-  font-variant-numeric:tabular-nums;letter-spacing:-.04em;line-height:.9;
-  text-shadow:0 0 26px var(--gold-glow),0 0 5px rgba(212,175,55,.25)}
+  font-variant-numeric:tabular-nums;line-height:.9;text-shadow:0 0 26px var(--gold-glow)}
 .rlb{font-size:9px;letter-spacing:.5em;color:rgba(212,175,55,.5);text-transform:uppercase}
-.rm{display:flex;gap:24px;font-size:8px;letter-spacing:.3em;color:var(--ink-dim);
-  text-transform:uppercase;margin-top:4px}
-.rm .v{display:block;color:var(--ink);font-size:14px;letter-spacing:.05em;margin-top:3px;
-  font-variant-numeric:tabular-nums}
-.rb{appearance:none;border:1px solid var(--ink-faint);background:transparent;
-  color:var(--ink-dim);font-family:var(--mono);font-size:8px;letter-spacing:.5em;text-transform:uppercase;
-  padding:12px 26px;cursor:pointer;margin-top:8px;transition:border-color .15s,color .15s;
+.rmeta{display:flex;gap:24px;font-size:8px;letter-spacing:.3em;color:var(--ink-dim);text-transform:uppercase;margin-top:4px}
+.rmeta .v{display:block;color:var(--ink);font-size:14px;margin-top:3px;font-variant-numeric:tabular-nums}
+
+/* Reset button with COOLDOWN */
+.rbtn{appearance:none;border:1px solid var(--ink-faint);background:transparent;
+  color:var(--ink-dim);font-family:var(--f);font-size:8px;letter-spacing:.5em;text-transform:uppercase;
+  padding:12px 26px;cursor:pointer;margin-top:8px;transition:border-color .15s,color .15s,opacity .3s;
   z-index:10;touch-action:manipulation}
-.rb:active{border-color:var(--blood);color:var(--blood)}
+.rbtn:active{border-color:var(--blood);color:var(--blood)}
+.rbtn.locked{opacity:.15;pointer-events:none}
+.cooldown-bar{width:120px;height:2px;background:var(--ink-faint);margin-top:6px;border-radius:1px;overflow:hidden}
+.cooldown-fill{height:100%;width:0;background:var(--blood);transition:width 3s linear}
+.cooldown-fill.go{width:100%}
 </style>
 </head>
 <body>
 
-<!-- NEURAL MESH (no blur filter = mobile safe) -->
-<svg class="neural-bg" viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice">
-<g stroke="#8B0000" stroke-width=".7" fill="none" opacity=".8">
-<path d="M60,50Q90,130 130,200T210,350L250,460" stroke-width=".9"/>
-<path class="d2" d="M160,30Q180,100 200,170T240,290L270,400Q290,480 320,560"/>
-<path class="d3" d="M90,180Q110,240 140,310T190,430L220,530"/>
-<path class="d4" d="M220,80Q250,150 280,230T330,370L360,480"/>
-<path class="d5" d="M40,280Q70,350 110,420T170,550L200,660"/>
-<path class="d6" d="M270,140Q290,210 310,280T340,400L370,510Q385,590 395,670"/>
-<path class="d7" d="M130,330Q150,400 180,460T220,570L250,670"/>
+<!-- Neural mesh — STATIC (zero animation CPU cost) -->
+<svg class="nbg" viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice">
+<g stroke="#8B0000" stroke-width=".6" fill="none" opacity=".7">
+<path d="M60,50Q90,130 130,200T210,350L250,460" stroke-width=".8"/>
+<path d="M160,30Q180,100 200,170T240,290L270,400Q290,480 320,560"/>
+<path d="M90,180Q110,240 140,310T190,430L220,530"/>
+<path d="M220,80Q250,150 280,230T330,370L360,480"/>
+<path d="M40,280Q70,350 110,420T170,550L200,660"/>
+<path d="M270,140Q290,210 310,280T340,400L370,510Q385,590 395,670"/>
+<path d="M130,330Q150,400 180,460T220,570L250,670"/>
 <path d="M20,500Q50,560 90,620T150,740"/>
-<path class="d3" d="M300,300Q320,360 340,430T380,560"/>
-<path class="d5" d="M180,600Q210,660 240,720T300,790"/>
 </g>
-<g fill="#C70039">
-<circle cx="130" cy="200" r="2.5"/><circle class="c2" cx="210" cy="350" r="3"/>
-<circle class="c3" cx="200" cy="170" r="2"/><circle class="c4" cx="270" cy="400" r="2.5"/>
-<circle class="c5" cx="140" cy="310" r="2"/><circle cx="280" cy="230" r="2.5"/>
-<circle class="c2" cx="110" cy="420" r="2"/><circle class="c3" cx="310" cy="280" r="2"/>
-<circle class="c4" cx="180" cy="460" r="2.5"/><circle class="c5" cx="370" cy="510" r="3"/>
-<circle cx="90" cy="620" r="2"/><circle class="c2" cx="240" cy="720" r="2.5"/>
+<g fill="#C70039" opacity=".5">
+<circle cx="130" cy="200" r="2.5"/><circle cx="210" cy="350" r="3"/>
+<circle cx="200" cy="170" r="2"/><circle cx="270" cy="400" r="2.5"/>
+<circle cx="140" cy="310" r="2"/><circle cx="280" cy="230" r="2.5"/>
+<circle cx="180" cy="460" r="2.5"/><circle cx="370" cy="510" r="3"/>
+<circle cx="90" cy="620" r="2"/><circle cx="240" cy="720" r="2.5"/>
 </g>
 </svg>
 
-<!-- HUD -->
-<div class="hud"><i class="tl"></i><i class="tr"></i><i class="bl"></i><i class="br"></i></div>
-<span class="htag t">M1 Probe // Córtex Motor Primário</span>
-<span class="htag b">Mushin Sports — FTT v4.0</span>
+<div class="hud"><i class="a"></i><i class="b"></i><i class="c"></i><i class="d"></i></div>
+<span class="ht t">M1 Probe // Córtex Motor</span>
+<span class="ht b">Mushin Sports — FTT v4.1</span>
 
-<!-- CANVAS: All visual feedback rendered here (zero DOM ops) -->
 <canvas id="fx"></canvas>
 
 <!-- IDLE -->
-<div class="screen on" id="idle">
-  <div class="brand">MUSHIN <span class="sep">//</span> FTT<span class="ver">v4</span></div>
+<div class="scr on" id="idle">
+  <div class="brand">MUSHIN <span class="sep">//</span> FTT</div>
   <div class="nw">
     <button class="nb" id="goBtn" type="button">
       <div class="in"><span class="dot"></span><span class="w">Conectar</span><span class="s">M1 Probe</span></div>
@@ -206,13 +177,13 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);
 </div>
 
 <!-- PREP -->
-<div class="screen" id="prep">
+<div class="scr" id="prep">
   <span class="pn" id="pv">3</span>
   <span class="pl">Preparar</span>
 </div>
 
 <!-- RUN -->
-<div class="screen" id="run">
+<div class="scr" id="run">
   <div class="rd">
     <span class="rl">Captura</span>
     <span class="tm" id="tmr"><span id="tv">10.0</span><span class="u">s</span></span>
@@ -220,83 +191,80 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);
     <div class="bk"><span class="ct" id="cv">0</span><span class="cl">Impulsos</span></div>
   </div>
 </div>
-<div class="st" id="stag"><span class="bl"></span>Capturando</div>
+<div class="stag" id="stag"><span class="bl"></span>Capturando</div>
 
 <!-- RESULT -->
-<div class="screen" id="result">
+<div class="scr" id="result">
   <span class="re">Análise Concluída</span>
   <div class="rf"><span class="rn" id="rnum">0</span><span class="rlb">Total Impulsos</span></div>
-  <div class="rm">
+  <div class="rmeta">
     <div>Janela<span class="v" id="mw">10s</span></div>
     <div>Taxa<span class="v" id="mr">0.0/s</span></div>
   </div>
-  <button class="rb" id="rstBtn" type="button">Nova Captura</button>
+  <button class="rbtn locked" id="rstBtn" type="button">Nova Captura</button>
+  <div class="cooldown-bar"><div class="cooldown-fill" id="cdFill"></div></div>
 </div>
 
 <script>
-/* ═══════════════════════════════════════════
-   MUSHIN FTT v4.0 — CANVAS RENDER PIPELINE
-   Zero DOM ops in hot path. GPU-composited.
-   ═══════════════════════════════════════════ */
+/* ═══ MUSHIN FTT v4.1 — BULLETPROOF MOBILE ═══
+   - Zero DOM ops in tap handler
+   - Canvas ripple: simple circles, no gradients
+   - Static SVG (zero animation cost)
+   - Ghost tap protection: 3s cooldown on result
+*/
 const $=s=>document.querySelector(s),DUR=10;
-let state='idle',taps=0,startT=0,rafId=0,endId=0,warned=false;
+let state='idle',taps=0,startT=0,rafId=0,endId=0;
 
-// DOM cache (touched ONCE at init, never queried again)
 const S={idle:$('#idle'),prep:$('#prep'),run:$('#run'),result:$('#result')};
 const tv=$('#tv'),tmr=$('#tmr'),cv=$('#cv');
 const rnum=$('#rnum'),mw=$('#mw'),mr=$('#mr');
 const pv=$('#pv'),stag=$('#stag');
+const rstBtn=$('#rstBtn'),cdFill=$('#cdFill');
 
-// ═══ CANVAS FX ENGINE ═══
+// ═══ CANVAS (simple circles, no gradients = fast) ═══
 const can=$('#fx'),ctx=can.getContext('2d');
-let W,H,dpr;
-const FX=[];// active effects pool
+let W,H;
+function sz(){W=can.width=window.innerWidth;H=can.height=window.innerHeight}
+sz();window.addEventListener('resize',sz);
 
-function sizeCanvas(){
-  dpr=window.devicePixelRatio||1;
-  W=window.innerWidth;H=window.innerHeight;
-  can.width=W*dpr;can.height=H*dpr;
-  can.style.width=W+'px';can.style.height=H+'px';
-  ctx.setTransform(dpr,0,0,dpr,0,0);
-}
-sizeCanvas();
-window.addEventListener('resize',sizeCanvas);
+const FX=[];
+let fxOn=false;
+function addFx(x,y){FX.push({x,y,p:0})}
 
-function addRipple(x,y){FX.push({t:'r',x,y,p:0})}
-function addFlash(){FX.push({t:'f',p:0})}
-
-// Single rAF loop for ALL visual effects
-let fxRunning=false;
-function fxLoop(){
-  if(!FX.length){fxRunning=false;return}
-  fxRunning=true;
+function fxTick(){
+  if(!FX.length){fxOn=false;ctx.clearRect(0,0,W,H);return}
+  fxOn=true;
   ctx.clearRect(0,0,W,H);
   for(let i=FX.length-1;i>=0;i--){
-    const e=FX[i];e.p+=.045;
+    const e=FX[i];
+    e.p+=.06;
     if(e.p>=1){FX.splice(i,1);continue}
-    if(e.t==='r'){
-      const r=90*(e.p*2.5+.1);
-      const a=1-e.p;
-      ctx.beginPath();
-      ctx.arc(e.x,e.y,r,0,6.283);
-      const g=ctx.createRadialGradient(e.x,e.y,0,e.x,e.y,r);
-      g.addColorStop(0,'rgba(199,0,57,'+(a*.7)+')');
-      g.addColorStop(1,'rgba(199,0,57,0)');
-      ctx.fillStyle=g;ctx.fill();
-    }else{
-      ctx.fillStyle='rgba(199,0,57,'+((.14)*(1-e.p))+')';
+    const r=80*e.p;
+    const a=.6*(1-e.p);
+    ctx.beginPath();
+    ctx.arc(e.x,e.y,r,0,6.283);
+    ctx.fillStyle='rgba(199,0,57,'+a+')';
+    ctx.fill();
+  }
+  // Screen flash (single rect, fades with oldest effect)
+  if(FX.length){
+    const newest=FX[FX.length-1];
+    if(newest.p<.3){
+      ctx.fillStyle='rgba(199,0,57,'+(0.1*(1-newest.p/.3))+')';
       ctx.fillRect(0,0,W,H);
     }
   }
-  requestAnimationFrame(fxLoop);
+  requestAnimationFrame(fxTick);
 }
-function kickFx(){if(!fxRunning){fxRunning=true;requestAnimationFrame(fxLoop)}}
+function kickFx(){if(!fxOn){fxOn=true;requestAnimationFrame(fxTick)}}
 
-// ═══ SCREEN MANAGEMENT ═══
+// ═══ SCREENS ═══
 function show(n){
   state=n;
-  Object.values(S).forEach(s=>s.classList.remove('on'));
-  S[n].classList.add('on');
+  S.idle.classList.toggle('on',n==='idle');
+  S.prep.classList.toggle('on',n==='prep');
+  S.run.classList.toggle('on',n==='run');
+  S.result.classList.toggle('on',n==='result');
   stag.classList.toggle('on',n==='run');
 }
 
@@ -310,8 +278,7 @@ function prep(){
   const iv=setInterval(()=>{
     c--;
     if(c>0){
-      pv.classList.add('pop');
-      setTimeout(()=>{pv.textContent=c;pv.classList.remove('pop')},80);
+      pv.textContent=c;
       if(navigator.vibrate)navigator.vibrate(50);
     }else{
       clearInterval(iv);
@@ -321,18 +288,18 @@ function prep(){
   },1000);
 }
 
-// ═══ TEST ENGINE ═══
+// ═══ TEST ═══
 function go(){
-  taps=0;warned=false;
-  cv.textContent='0';tv.textContent=DUR.toFixed(1);
-  tmr.classList.remove('w');
+  taps=0;cv.textContent='0';
+  tv.textContent=DUR.toFixed(1);tmr.classList.remove('w');
   show('run');
   startT=performance.now();
   function tick(now){
+    if(state!=='run')return;
     const rem=DUR-(now-startT)*.001;
     if(rem<=0){tv.textContent='0.0';fin();return}
-    tv.textContent=rem<10?rem.toFixed(1):DUR.toFixed(1);
-    if(!warned&&rem<=3){warned=true;tmr.classList.add('w')}
+    tv.textContent=rem.toFixed(1);
+    if(rem<=3)tmr.classList.add('w');
     rafId=requestAnimationFrame(tick);
   }
   rafId=requestAnimationFrame(tick);
@@ -340,21 +307,33 @@ function go(){
 }
 
 function fin(){
-  if(state==='done')return;// guard double-fire
+  if(state==='done')return;
   cancelAnimationFrame(rafId);clearTimeout(endId);
   state='done';
   rnum.textContent=taps;
   mw.textContent=DUR+'s';
   mr.textContent=(taps/DUR).toFixed(1)+'/s';
-  setTimeout(()=>show('result'),180);
+
+  // Lock the reset button for 3 seconds (ghost tap protection)
+  rstBtn.classList.add('locked');
+  cdFill.classList.remove('go');
+  void cdFill.offsetWidth;
+
+  show('result');
+
+  // Start cooldown animation
+  requestAnimationFrame(()=>{cdFill.classList.add('go')});
+
+  // Unlock after 3 seconds
+  setTimeout(()=>{rstBtn.classList.remove('locked')},3000);
 }
 
-// ═══ TAP — ABSOLUTE MINIMUM WORK ═══
+// ═══ TAP (absolute minimum work) ═══
 function tap(x,y){
   if(state!=='run')return;
   taps++;
-  cv.textContent=taps;// single DOM write, no reflow
-  addRipple(x,y);addFlash();kickFx();
+  cv.textContent=taps;
+  addFx(x,y);kickFx();
   if(navigator.vibrate)navigator.vibrate(50);
 }
 
@@ -372,7 +351,12 @@ S.run.addEventListener('mousedown',e=>{
   tap(e.clientX,e.clientY);
 });
 
-$('#rstBtn').addEventListener('click',e=>{e.preventDefault();show('idle')});
+$('#rstBtn').addEventListener('click',e=>{
+  e.preventDefault();
+  if(rstBtn.classList.contains('locked'))return;
+  show('idle');
+});
+
 show('idle');
 </script>
 </body>
